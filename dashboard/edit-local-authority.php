@@ -106,23 +106,32 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                 }
                             ?>
                             <form action="update-local-authority.php" method="post" enctype="multipart/form-data">
-                                <h3>Basic Information</h3>
+                                <input type="text" name="id" value="<?php echo $row['id']; ?>">
+                            <h3>Basic Information</h3>
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">
-                                            <label for="authority_name" class="form-label">Authority Name</label>
-                                            <input type="text" class="form-control" id="authority_name" name="authority_name" value="<?php echo htmlspecialchars($row['name']); ?>" required>
+                                            <label for="name" class="form-label">Authority Name</label>
+                                            <input type="text" class="form-control" id="name" name="name" value="<?php echo htmlspecialchars($row['name']); ?>" required>
                                         </div>
                                     </div>
+                                    <?php //echo '<pre>'; print_r($local_authority_types); die(); ?>
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>Authority Type</label>
-                                            <select name="authority_type_id" id="authority_type_id" class="form-control" required>
-                                                <option value="">-- Select Authority Type --</option>
-                                                <?php foreach ($local_authority_types as $authority_type): ?>
-                                                <option value="<?= $authority_type['id'] ?>"><?= $authority_type['name'] ?></option>
-                                                <?php endforeach; ?>
-                                            </select>
+                                            <?php $selected_id = isset($edit_data['type_id']) ? $edit_data['type_id'] : ''; ?>
+
+                                            <select name="type_id" id="type_id" class="form-control" required>
+                                            <option value="">-- Select Authority Type --</option>
+                                            <?php foreach ($local_authority_types as $authority_type): ?>
+                                                <option value="<?= $authority_type['id'] ?>"
+                                                    <?= ($authority_type['id'] == $selected_id) ? 'selected' : '' ?>>
+                                                    <?= htmlspecialchars($authority_type['name']) ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+
+
                                         </div>
                                     </div>
                                 </div>
