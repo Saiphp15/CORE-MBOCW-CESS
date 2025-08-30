@@ -150,6 +150,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $mail->Body    = '
                             <p>Hello ' . htmlspecialchars($cafo_name) . ',</p>
                             <p>Welcome! Your account has been created successfully. Your login details are:</p>
+                            <p><strong>Link:</strong> <a href="http://localhost/CORE-MBOCW-CESS/login.php">click here to login</a></p>
                             <p><strong>Username:</strong> ' . htmlspecialchars($cafo_email) . '</p>
                             <p><strong>Password:</strong> 123456</p>
                             <p>Please log in and change your password as soon as possible for security reasons.</p>
