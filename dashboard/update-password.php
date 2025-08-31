@@ -1,13 +1,4 @@
 <?php
-/**
- * save-user.php
- *
- * This script processes the user creation form submission from add-user.php.
- * It performs server-side validation, hashes the password,
- * and securely inserts the new user's data into the database,
- * matching the provided column order.
- */
-
 session_start();
 if (!isset($_SESSION['user_id'])) {
     // If the user is not logged in, redirect them to the login page.
@@ -20,87 +11,102 @@ require_once '../config/db.php';
 
 require_once '../vendor/autoload.php'; // Adjust the path if needed
 
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
 // Check if the form was submitted using the POST method.
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // echo "<pre>";
-    // print_r($_POST);die;
+
+    // Sanitize input
+    $old_password     = trim($_POST['old_password']);
+    $password         = trim($_POST['password']);
+    $confirm_password = trim($_POST['confirm_password']);
+    $user_id          = $_SESSION['user_id'];
+
+    // Basic validation
+    if (empty($old_password) || empty($password) || empty($confirm_password)) {
+        $_SESSION['error'] = "All fields are required.";
+        header("Location: change-password.php");
+        exit;
+    }
+    
+    if ($password !== $confirm_password) {
+        $_SESSION['error'] = "Password and confirm password do not match.";
+        header("Location: change-password.php");
+        exit;
+    }
+
+    // Fetch user
     $stmt = $conn->prepare("SELECT * FROM users WHERE id = ?");
-    $stmt->bind_param("i", $_SESSION['user_id']);
+    $stmt->bind_param("i", $user_id);
     $stmt->execute();
     $result = $stmt->get_result();
     $user = $result->fetch_assoc();
     $stmt->close();
-    // echo "<pre>";
-    // print_r($user['password']);
-    //  echo "\n";
-    // print_r(md5('adminpass'));
-    // die;
-    $old_password = trim($_POST['old_password']);
-    $password = trim($_POST['password']);
-    $confirm_password = trim($_POST['confirm_password']);
-    $user_id = $_SESSION['user_id'];
 
-    // Set a default value for is_active.
-    // $is_active_status = 1; 
-    // echo "<pre>";
-    // print_r($user['password']);
-    //  echo "\n";
-    // print_r($old_password);
-    // die;
-    if ($user['password'] != md5($old_password)) {
-        $_SESSION['error'] = "Old and New Password does not match";
-        header("Location: change-password.php");
-        exit;
-    }
-    // Basic validation check. You can add more complex validation as needed.
-    if ($password != $confirm_password) {
-        $_SESSION['error'] = "Password and confirm password does not match.";
+    if (!$user) {
+        $_SESSION['error'] = "User not found.";
         header("Location: change-password.php");
         exit;
     }
 
-    // Hash the password for secure storage in the database.
-    // $hashed_password = md5($password);
-
-    // --- 2. Database Insertion with Prepared Statements ---
-    // Prepare the SQL statement to prevent SQL injection attacks.
-    // The column order here now matches the order in your table screenshot.
-    $sql = "UPDATE users SET  password = ? WHERE id = ?";
+    // Verify old password
+    if (!password_verify($old_password, $user['password'])) {
+        $_SESSION['error'] = "Old password does not match.";
+        header("Location: change-password.php");
+        exit;
+    }
     
-    $stmt = $conn->prepare($sql);
+    // Hash new password
+    $hashed_password = md5($password);
 
-    if ($stmt === false) {
-        $_SESSION['error'] = "Database error: " . $conn->error;
-        header("Location: edit-profile.php");
+    // Update password
+    $stmt = $conn->prepare("UPDATE users SET password = ? WHERE id = ?");
+    $stmt->bind_param("si", $hashed_password, $user_id);
+    if ($stmt->execute()) {
+        $_SESSION['success'] = "Password changed successfully! Please login again.";
+
+        // Send email notification
+        try {
+            $mail = new PHPMailer(true);
+            $mail->isSMTP();
+            $mail->Host       = 'smtp.yourserver.com'; // change this
+            $mail->SMTPAuth   = true;
+            $mail->Username   = 'your-email@example.com'; // change this
+            $mail->Password   = 'your-email-password';   // change this
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port       = 587;
+
+            $mail->setFrom('your-email@example.com', 'MBOCWCESS Portal');
+            $mail->addAddress($user['email'], $user['name']);
+            
+            $mail->isHTML(true);
+            $mail->Subject = "Password Changed Successfully";
+            $mail->Body    = "
+                <p>Hi <b>{$user['name']}</b>,</p>
+                <p>Your password has been changed successfully on <b>MBOCWCESS Portal</b>.</p>
+                <p>If you did not make this change, please contact support immediately.</p>
+                <br>
+                <p>Regards,<br>MBOCWCESS Team</p>
+            ";
+
+            $mail->send();
+        } catch (Exception $e) {
+            error_log("Mailer Error: " . $mail->ErrorInfo);
+        }
+
+        // Force logout after password change
+        header("Location: logout.php");
+        exit;
+    } else {
+        $_SESSION['error'] = "Failed to update password. Please try again.";
+        header("Location: change-password.php");
         exit;
     }
-
-    // Bind parameters to the prepared statement, ensuring order and data types match.
-    // 's' for string, 'i' for integer.
-    $stmt->bind_param("si", 
-        md5($password), 
-        $user_id
-    );
-
-    // Execute the statement and check for success.
-    if ($stmt->execute()) {
-        $_SESSION['success'] = "Profile updated successfully!";
-
-    } else {
-        $_SESSION['error'] = "Failed to add user: " . $stmt->error;
-    }
-
-    // Close the statement and the database connection.
-    $stmt->close();
-    $conn->close();
-
-    // Redirect back to the add user page.
-    header("Location: logout.php");
-    exit;
 
 } else {
     // If the request method is not POST, redirect to the user list page.
-    header("Location: users.php");
+    header("Location: change-password.php");
     exit;
 }
 ?>

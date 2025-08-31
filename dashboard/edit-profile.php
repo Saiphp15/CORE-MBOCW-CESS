@@ -140,19 +140,19 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>GSTN</label>
-                                            <input type="text" name="gstn" class="form-control" value="<?= $user['gstn'] ?>" required>
+                                            <input type="text" name="gstn" class="form-control" value="<?= $user['gstn'] ?>" >
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>Pancard</label>
-                                            <input type="text" name="pancard" class="form-control" value="<?= $user['pancard'] ?>" required>
+                                            <input type="text" name="pancard" class="form-control" value="<?= $user['pancard'] ?>" >
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>Aadhaar</label>
-                                            <input type="text" name="aadhaar" class="form-control" value="<?= $user['aadhaar'] ?>" required>
+                                            <input type="text" name="aadhaar" class="form-control" value="<?= $user['aadhaar'] ?>" >
                                         </div>
                                     </div>
                                 </div>
@@ -198,7 +198,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>Address</label>
-                                            <input type="text" name="address" class="form-control" value="<?= $user['address'] ?>" required>
+                                            <input type="text" name="address" class="form-control" value="<?= $user['address'] ?>" >
                                         </div>
                                     </div>
                                 </div>
