@@ -38,11 +38,11 @@
           <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
             <span class="dropdown-header"><?php echo $_SESSION['user_email']; ?></span>
             <div class="dropdown-divider"></div>
-            <a href="#" class="dropdown-item">
+            <a href="edit-profile.php" class="dropdown-item">
               <i class="fas fa-user mr-2"></i> Profile
             </a>
             <div class="dropdown-divider"></div>
-            <a href="#" class="dropdown-item">
+            <a href="change-password.php" class="dropdown-item">
               <i class="fas fa-lock mr-2"></i> change Password
             </a>
             <div class="dropdown-divider"></div>
