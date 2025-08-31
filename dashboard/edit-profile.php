@@ -16,6 +16,17 @@ $stmt->close();
 // Fetch required dropdown values
 $roles = $conn->query("SELECT id, name FROM roles")->fetch_all(MYSQLI_ASSOC);
 $districts = $conn->query("SELECT id, name FROM districts")->fetch_all(MYSQLI_ASSOC);
+$talukas = [];
+$villages = [];
+if( $user['district_id'] ) {
+    $district_id = $user['district_id'];
+    $talukas = $conn->query("SELECT id, name FROM talukas WHERE district_id=$district_id")->fetch_all(MYSQLI_ASSOC);
+}
+if( $user['taluka_id'] ) {
+    $taluka_id = $user['taluka_id'];
+    $villages = $conn->query("SELECT id, name FROM villages WHERE taluka_id=$taluka_id")->fetch_all(MYSQLI_ASSOC);
+}
+
 ?>
 <!DOCTYPE html>
 <!--
@@ -184,6 +195,9 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                             <label>Taluka</label>
                                             <select name="taluka_id" id="taluka_id" class="form-control">
                                                 <option value="" >Choose Taluka</option>
+                                                <?php foreach ($talukas as $tal): ?>
+                                                    <option value="<?= $tal['id'] ?>" <?= $user['taluka_id'] == $tal['id'] ? 'selected' : "" ?> ><?= $tal['name'] ?></option>
+                                                <?php endforeach; ?>
                                             </select>
                                         </div>
                                     </div>
@@ -192,6 +206,9 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                             <label>Village</label>
                                             <select name="village_id" id="village_id" class="form-control">
                                                 <option value="">Choose Village</option>
+                                                <?php foreach ($villages as $vill): ?>
+                                                    <option value="<?= $vill['id'] ?>" <?= $user['village_id'] == $vill['id'] ? 'selected' : "" ?> ><?= $vill['name'] ?></option>
+                                                <?php endforeach; ?>
                                             </select>
                                         </div>
                                     </div>
