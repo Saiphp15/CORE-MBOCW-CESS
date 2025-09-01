@@ -31,13 +31,13 @@ DROP TABLE IF EXISTS `bulk_projects_invoices_history`;
 CREATE TABLE IF NOT EXISTS `bulk_projects_invoices_history` (
   `id` int NOT NULL AUTO_INCREMENT,
   `effective_cess_amount` decimal(15,2) NOT NULL,
-  `bulk_project_invoices_template_file` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `bulk_project_invoices_template_file` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci	 NOT NULL,
   `cess_payment_mode` int NOT NULL COMMENT '1=Online ,2=Offline, 3=Exempted',
   `is_payment_verified` int NOT NULL COMMENT '1=verified, 2=pending, 3=rejected',
   `rejection_reason` text NOT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci	;
 
 --
 -- Dumping data for table `bulk_projects_invoices_history`
@@ -77,7 +77,7 @@ CREATE TABLE IF NOT EXISTS `cess_payment_history` (
   `invoice_upload_type` enum('bulk','single') NOT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci	;
 
 --
 -- Dumping data for table `cess_payment_history`
@@ -190,7 +190,7 @@ CREATE TABLE IF NOT EXISTS `employers` (
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `created_by` int NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci	;
 
 --
 -- Dumping data for table `employers`
@@ -219,7 +219,7 @@ DROP TABLE IF EXISTS `local_authorities`;
 CREATE TABLE IF NOT EXISTS `local_authorities` (
   `id` int NOT NULL AUTO_INCREMENT,
   `type_id` int NOT NULL COMMENT 'local_authority_types id',
-  `name` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
+  `name` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci	,
   `state_id` int NOT NULL,
   `district_id` int NOT NULL,
   `taluka_id` int NOT NULL,
@@ -231,7 +231,7 @@ CREATE TABLE IF NOT EXISTS `local_authorities` (
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=35 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=35 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci	;
 
 --
 -- Dumping data for table `local_authorities`
@@ -279,7 +279,7 @@ CREATE TABLE IF NOT EXISTS `local_authorities_users` (
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci	;
 
 --
 -- Dumping data for table `local_authorities_users`
@@ -301,7 +301,7 @@ CREATE TABLE IF NOT EXISTS `local_authority_types` (
   `description` text NOT NULL,
   `is_active` int NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci	;
 
 --
 -- Dumping data for table `local_authority_types`
@@ -330,7 +330,7 @@ CREATE TABLE IF NOT EXISTS `permissions` (
   `description` text NOT NULL,
   `is_active` int NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci	;
 
 --
 -- Dumping data for table `permissions`
@@ -373,13 +373,13 @@ CREATE TABLE IF NOT EXISTS `projects` (
   `village_id` bigint UNSIGNED DEFAULT NULL,
   `pin_code` varchar(6) DEFAULT NULL,
   `project_address` text,
-  `status` enum('Pending','Approved','Rejected','Completed') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT 'Pending',
+  `status` enum('Pending','Approved','Rejected','Completed') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci	 DEFAULT 'Pending',
   `created_by` bigint UNSIGNED DEFAULT NULL,
   `updated_by` bigint UNSIGNED DEFAULT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci	;
 
 --
 -- Dumping data for table `projects`
@@ -411,7 +411,7 @@ CREATE TABLE IF NOT EXISTS `project_categories` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci	;
 
 --
 -- Dumping data for table `project_categories`
@@ -434,7 +434,7 @@ DROP TABLE IF EXISTS `project_documents`;
 CREATE TABLE IF NOT EXISTS `project_documents` (
   `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
   `project_id` bigint UNSIGNED NOT NULL,
-  `work_order` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `work_order` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci	 NOT NULL,
   `sanctioned_plan` text NOT NULL,
   `estimate` text NOT NULL,
   `commencement_certificate` text NOT NULL,
@@ -460,7 +460,7 @@ CREATE TABLE IF NOT EXISTS `project_documents` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `project_id` (`project_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci	;
 
 -- --------------------------------------------------------
 
@@ -481,7 +481,7 @@ CREATE TABLE IF NOT EXISTS `project_types` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `category_id` (`category_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci	;
 
 --
 -- Dumping data for table `project_types`
@@ -523,7 +523,7 @@ CREATE TABLE IF NOT EXISTS `project_work_orders` (
   `work_order_gst_cess_amount` decimal(15,2) NOT NULL,
   `work_order_administrative_cost` decimal(15,2) NOT NULL,
   `work_order_effective_cess_amount` decimal(15,2) NOT NULL,
-  `work_order_approval_letter` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `work_order_approval_letter` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci	 NOT NULL,
   `employer_id` int NOT NULL,
   `manager_id` int NOT NULL,
   `engineer_id` int NOT NULL,
@@ -533,7 +533,7 @@ CREATE TABLE IF NOT EXISTS `project_work_orders` (
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci	;
 
 --
 -- Dumping data for table `project_work_orders`
@@ -573,7 +573,7 @@ CREATE TABLE IF NOT EXISTS `razorpay_transactions` (
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `order_id` (`order_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci	;
 
 --
 -- Dumping data for table `razorpay_transactions`
@@ -602,7 +602,7 @@ CREATE TABLE IF NOT EXISTS `roles` (
   `is_active` int NOT NULL COMMENT '1=active, 2=inactive, 3=deleted	',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci	;
 
 --
 -- Dumping data for table `roles`
@@ -762,7 +762,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `is_active` int NOT NULL COMMENT '1=active, 2=inactive, 3=deleted',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci	;
 
 --
 -- Dumping data for table `users`

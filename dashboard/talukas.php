@@ -128,7 +128,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
             <div class="card-header">
                 <h3 class="card-title">Talukas</h3>
                 <div class="card-tools">
-                    <a href="add-taluka.php" class="btn btn-primary" ><i class="fas fa-plus"></i> Add Taluka</a> 
+                    <a href="add-talukas.php" class="btn btn-primary" ><i class="fas fa-plus"></i> Add Taluka</a> 
                     <button type="button" class="btn btn-tool" data-card-widget="collapse" data-toggle="tooltip" title="Collapse"><i class="fas fa-minus"></i></button>
                     <button type="button" class="btn btn-tool" data-card-widget="remove" data-toggle="tooltip" title="Remove"><i class="fas fa-times"></i></button>
                 </div>
@@ -170,8 +170,8 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                 echo "<td>".htmlspecialchars($row['district_name'])."</td>";
                                 echo "<td>
                                         <label class='switch' title='$statusText'><input type='checkbox' data-id='{$row['id']}' id='activeToggle' onclick='return confirm(\"Are you sure you want to perform this action?\");' {$isActive}><span class='slider round'></span></label>
-                                        <a href='edit-taluka.php?id=".$row['id']."' class='btn btn-sm btn-primary'><i class='fas fa-edit'></i></a>
-                                        <a href='view-taluka.php?id=".$row['id']."' class='btn btn-sm btn-info' ><i class='fas fa-eye'></i></a>
+                                        <a href='edit-talukas.php?id=".$row['id']."' class='btn btn-sm btn-primary'><i class='fas fa-edit'></i></a>
+                                        <a href='view-talukas.php?id=".$row['id']."' class='btn btn-sm btn-info' ><i class='fas fa-eye'></i></a>
                                     </td>";
                                 echo "</tr>";
                                 $sr++;
