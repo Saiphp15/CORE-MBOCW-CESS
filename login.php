@@ -1,6 +1,5 @@
 <?php 
 session_start();
-$password = md5('superadmin'); // demo password generation
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -111,6 +110,12 @@ $password = md5('superadmin'); // demo password generation
     <div class="form-section">
       <h1>MBOCWCESS Portal</h1>
       <p>MBOCW CESS</p>
+      <?php
+      if (isset($_SESSION['success'])) {
+          echo "<div class='alert alert-success'>" . $_SESSION['success'] . "</div>";
+          unset($_SESSION['success']);
+      }
+      ?>
       <!-- Error Message -->
       <?php if (isset($_SESSION['error'])): ?>
         <div class="alert alert-danger"><?php echo $_SESSION['error']; unset($_SESSION['error']); ?></div>

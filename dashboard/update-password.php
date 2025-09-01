@@ -51,7 +51,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     // Verify old password
-    if (!password_verify($old_password, $user['password'])) {
+    if (md5($old_password) != $user['password']) {
         $_SESSION['error'] = "Old password does not match.";
         header("Location: change-password.php");
         exit;
@@ -70,14 +70,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         try {
             $mail = new PHPMailer(true);
             $mail->isSMTP();
-            $mail->Host       = 'smtp.yourserver.com'; // change this
+            $mail->Host       = 'smtp.gmail.com'; // change this
             $mail->SMTPAuth   = true;
-            $mail->Username   = 'your-email@example.com'; // change this
-            $mail->Password   = 'your-email-password';   // change this
+            $mail->Username   = 'aaravprashantmane@gmail.com'; // change this
+            $mail->Password   = 'rpfbzhzfxomebmcq';   // change this
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             $mail->Port       = 587;
 
-            $mail->setFrom('your-email@example.com', 'MBOCWCESS Portal');
+            $mail->setFrom('aaravprashantmane@gmail.com', 'MBOCWCESS Portal');
             $mail->addAddress($user['email'], $user['name']);
             
             $mail->isHTML(true);
