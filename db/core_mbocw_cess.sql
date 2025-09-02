@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Aug 30, 2025 at 04:53 PM
+-- Generation Time: Sep 02, 2025 at 08:49 AM
 -- Server version: 9.1.0
 -- PHP Version: 8.2.26
 
@@ -31,13 +31,13 @@ DROP TABLE IF EXISTS `bulk_projects_invoices_history`;
 CREATE TABLE IF NOT EXISTS `bulk_projects_invoices_history` (
   `id` int NOT NULL AUTO_INCREMENT,
   `effective_cess_amount` decimal(15,2) NOT NULL,
-  `bulk_project_invoices_template_file` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci	 NOT NULL,
+  `bulk_project_invoices_template_file` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `cess_payment_mode` int NOT NULL COMMENT '1=Online ,2=Offline, 3=Exempted',
   `is_payment_verified` int NOT NULL COMMENT '1=verified, 2=pending, 3=rejected',
   `rejection_reason` text NOT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci	;
+) ENGINE=MyISAM AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `bulk_projects_invoices_history`
@@ -77,7 +77,7 @@ CREATE TABLE IF NOT EXISTS `cess_payment_history` (
   `invoice_upload_type` enum('bulk','single') NOT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci	;
+) ENGINE=MyISAM AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `cess_payment_history`
@@ -131,16 +131,16 @@ CREATE TABLE IF NOT EXISTS `districts` (
 --
 
 INSERT INTO `districts` (`id`, `name`, `state_id`, `active_status`, `created_by`, `created_datetime`, `updated_by`, `updated_datetime`) VALUES
-(1, 'Ahmednagar', 14, 1, NULL, '2025-07-24 17:19:41', NULL, '2025-08-28 18:42:54'),
-(2, 'Akola', 14, 1, NULL, '2025-07-24 17:19:41', NULL, '2025-07-24 17:19:41'),
-(3, 'Amravati', 14, 1, NULL, '2025-07-24 17:19:41', NULL, '2025-07-24 17:19:41'),
-(4, 'Aurangabad', 14, 1, NULL, '2025-07-24 17:19:41', NULL, '2025-07-24 17:19:41'),
-(5, 'Beed', 14, 1, NULL, '2025-07-24 17:19:41', NULL, '2025-07-24 17:19:41'),
-(6, 'Bhandara', 14, 1, NULL, '2025-07-24 17:19:41', NULL, '2025-07-24 17:19:41'),
-(7, 'Buldhana', 14, 1, NULL, '2025-07-24 17:19:41', NULL, '2025-07-24 17:19:41'),
-(8, 'Chandrapur', 14, 1, NULL, '2025-07-24 17:19:41', NULL, '2025-07-24 17:19:41'),
-(9, 'Dhule', 14, 1, NULL, '2025-07-24 17:19:41', NULL, '2025-07-24 17:19:41'),
-(10, 'Gadchiroli', 14, 1, NULL, '2025-07-24 17:19:41', NULL, '2025-07-24 17:19:41'),
+(1, 'Ahmednagar', 14, 1, NULL, '2025-07-24 17:19:41', 1, '2025-09-02 08:16:59'),
+(2, 'Akola', 14, 1, NULL, '2025-07-24 17:19:41', 1, '2025-09-02 08:17:02'),
+(3, 'Amravati', 14, 1, NULL, '2025-07-24 17:19:41', 1, '2025-09-02 08:17:04'),
+(4, 'Aurangabad', 14, 1, NULL, '2025-07-24 17:19:41', 1, '2025-09-02 08:17:06'),
+(5, 'Beed', 14, 1, NULL, '2025-07-24 17:19:41', 1, '2025-09-02 08:17:09'),
+(6, 'Bhandara', 14, 1, NULL, '2025-07-24 17:19:41', 1, '2025-09-02 08:17:11'),
+(7, 'Buldhana', 14, 1, NULL, '2025-07-24 17:19:41', 1, '2025-09-02 08:17:14'),
+(8, 'Chandrapur', 14, 1, NULL, '2025-07-24 17:19:41', 1, '2025-09-02 08:17:16'),
+(9, 'Dhule', 14, 1, NULL, '2025-07-24 17:19:41', 1, '2025-09-02 08:17:22'),
+(10, 'Gadchiroli', 14, 1, NULL, '2025-07-24 17:19:41', 1, '2025-09-02 08:17:25'),
 (11, 'Gondia', 14, 1, NULL, '2025-07-24 17:19:41', NULL, '2025-07-24 17:19:41'),
 (12, 'Hingoli', 14, 1, NULL, '2025-07-24 17:19:41', NULL, '2025-07-24 17:19:41'),
 (13, 'Jalgaon', 14, 1, NULL, '2025-07-24 17:19:41', NULL, '2025-07-24 17:19:41'),
@@ -190,7 +190,7 @@ CREATE TABLE IF NOT EXISTS `employers` (
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `created_by` int NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci	;
+) ENGINE=MyISAM AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `employers`
@@ -198,7 +198,7 @@ CREATE TABLE IF NOT EXISTS `employers` (
 
 INSERT INTO `employers` (`id`, `employer_type`, `name`, `email`, `phone`, `pancard`, `pancard_path`, `aadhaar`, `aadhaar_path`, `gstn`, `is_active`, `created_at`, `created_by`) VALUES
 (1, '', 'Employer Name 1', 'employer1@gmail.com', 2147483647, '', '', '', '', '123456789', 1, '2025-08-24 18:55:28', 1),
-(2, 'Private Company', 'Employer Name 2', 'employer2@gmail.com', 1234568970, '', '', '', '', '555656565', 0, '2025-08-24 18:55:28', 1),
+(2, 'Private Company', 'Employer Name 2', 'employer2@gmail.com', 1234568970, '', '', '', '', '555656565', 1, '2025-08-24 18:55:28', 1),
 (3, 'Private Company', 'Employer Name 3', 'employer3@gmail.com', 2147483647, '', '', '', '', '562315478', 0, '2025-08-24 18:55:28', 1),
 (4, 'Private Company', 'Employer Name 4', 'employer4@gmail.com', 2147483647, '', '', '', '', '562315478', 1, '2025-08-24 18:55:28', 1),
 (5, 'Private Company', 'Employer Name 5', 'employer5@gmail.com', 2147483647, '', '', '', '', '562315478', 0, '2025-08-24 18:55:28', 1),
@@ -219,7 +219,7 @@ DROP TABLE IF EXISTS `local_authorities`;
 CREATE TABLE IF NOT EXISTS `local_authorities` (
   `id` int NOT NULL AUTO_INCREMENT,
   `type_id` int NOT NULL COMMENT 'local_authority_types id',
-  `name` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci	,
+  `name` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
   `state_id` int NOT NULL,
   `district_id` int NOT NULL,
   `taluka_id` int NOT NULL,
@@ -231,7 +231,7 @@ CREATE TABLE IF NOT EXISTS `local_authorities` (
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=35 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci	;
+) ENGINE=MyISAM AUTO_INCREMENT=35 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `local_authorities`
@@ -260,9 +260,9 @@ INSERT INTO `local_authorities` (`id`, `type_id`, `name`, `state_id`, `district_
 (20, 7, 'Khadki Cantonment Board', 0, 0, 0, 0, '', NULL, NULL, 1, '0000-00-00 00:00:00', '0000-00-00 00:00:00'),
 (21, 8, 'Pune Town Planning Department', 0, 0, 0, 0, '', NULL, NULL, 1, '0000-00-00 00:00:00', '0000-00-00 00:00:00'),
 (22, 8, 'Navi Mumbai ULB', 0, 0, 0, 0, '', NULL, NULL, 1, '0000-00-00 00:00:00', '0000-00-00 00:00:00'),
-(23, 8, 'Thane ULB', 0, 0, 0, 0, '', NULL, NULL, 2, '0000-00-00 00:00:00', '0000-00-00 00:00:00'),
+(23, 8, 'Thane ULB', 0, 0, 0, 0, '', NULL, NULL, 1, '0000-00-00 00:00:00', '0000-00-00 00:00:00'),
 (33, 2, 'Sample Authority name', 14, 27, 27, 2, 'sample address', '', '', 1, '2025-08-25 20:18:51', '2025-08-25 20:18:51'),
-(34, 2, 'Sample authority name 1', 14, 27, 27, 11, 'S/O: Vithoba Atpadkar, 2852 - A, Uran Karanja Road, Dawournagar,', NULL, NULL, 2, '2025-08-29 19:02:17', '2025-08-29 19:02:17');
+(34, 2, 'Sample authority name 1', 14, 27, 27, 11, 'S/O: Vithoba Atpadkar, 2852 - A, Uran Karanja Road, Dawournagar,                                                                                        ', NULL, NULL, 1, '2025-08-29 19:02:17', '2025-09-02 14:02:46');
 
 -- --------------------------------------------------------
 
@@ -279,7 +279,7 @@ CREATE TABLE IF NOT EXISTS `local_authorities_users` (
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci	;
+) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `local_authorities_users`
@@ -301,7 +301,7 @@ CREATE TABLE IF NOT EXISTS `local_authority_types` (
   `description` text NOT NULL,
   `is_active` int NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci	;
+) ENGINE=MyISAM AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `local_authority_types`
@@ -330,7 +330,7 @@ CREATE TABLE IF NOT EXISTS `permissions` (
   `description` text NOT NULL,
   `is_active` int NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci	;
+) ENGINE=MyISAM AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `permissions`
@@ -373,13 +373,13 @@ CREATE TABLE IF NOT EXISTS `projects` (
   `village_id` bigint UNSIGNED DEFAULT NULL,
   `pin_code` varchar(6) DEFAULT NULL,
   `project_address` text,
-  `status` enum('Pending','Approved','Rejected','Completed') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci	 DEFAULT 'Pending',
+  `status` enum('Pending','Approved','Rejected','Completed') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT 'Pending',
   `created_by` bigint UNSIGNED DEFAULT NULL,
   `updated_by` bigint UNSIGNED DEFAULT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci	;
+) ENGINE=MyISAM AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `projects`
@@ -411,7 +411,7 @@ CREATE TABLE IF NOT EXISTS `project_categories` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci	;
+) ENGINE=MyISAM AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `project_categories`
@@ -420,7 +420,7 @@ CREATE TABLE IF NOT EXISTS `project_categories` (
 INSERT INTO `project_categories` (`id`, `name`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
 (1, 'Urban Infrastructure', 'Urban residential and commercial construction', 1, '2025-08-06 06:36:31', '2025-08-06 06:36:31'),
 (2, 'Public Works', 'Roads, bridges, government infrastructure', 1, '2025-08-06 06:36:31', '2025-08-06 06:36:31'),
-(3, 'Industrial', 'Factories, power plants, logistics parks', 1, '2025-08-06 06:36:31', '2025-08-29 09:32:10'),
+(3, 'Industrial', 'Factories, power plants, logistics parks', 1, '2025-08-06 06:36:31', '2025-09-02 07:25:39'),
 (4, 'Large Infrastructure', 'Airports, ports, expressways, rail', 1, '2025-08-06 06:36:31', '2025-08-06 06:36:31'),
 (5, 'Other', 'Miscellaneous government schemes and smart projects', 1, '2025-08-06 06:36:31', '2025-08-06 06:36:31');
 
@@ -434,7 +434,7 @@ DROP TABLE IF EXISTS `project_documents`;
 CREATE TABLE IF NOT EXISTS `project_documents` (
   `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
   `project_id` bigint UNSIGNED NOT NULL,
-  `work_order` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci	 NOT NULL,
+  `work_order` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `sanctioned_plan` text NOT NULL,
   `estimate` text NOT NULL,
   `commencement_certificate` text NOT NULL,
@@ -460,7 +460,7 @@ CREATE TABLE IF NOT EXISTS `project_documents` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `project_id` (`project_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci	;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
 
@@ -481,7 +481,7 @@ CREATE TABLE IF NOT EXISTS `project_types` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `category_id` (`category_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci	;
+) ENGINE=MyISAM AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `project_types`
@@ -504,7 +504,7 @@ INSERT INTO `project_types` (`id`, `category_id`, `name`, `description`, `cess_t
 (14, 4, 'Port Development', 'Docks, shipping yards', '', '', 1, '2025-08-06 06:37:24', '2025-08-06 06:37:24'),
 (15, 5, 'Slum Rehabilitation', 'SRD or MHADA projects', '', '', 1, '2025-08-06 06:37:24', '2025-08-06 06:37:24'),
 (16, 5, 'Smart City Projects', 'IT infra, smart lights', '', '', 1, '2025-08-06 06:37:24', '2025-08-06 06:37:24'),
-(17, 5, 'Affordable Housing', 'PMAY or low-cost housing', '', '', 1, '2025-08-06 06:37:24', '2025-08-06 06:37:24');
+(17, 5, 'Affordable Housing', 'PMAY or low-cost housing', '', '', 1, '2025-08-06 06:37:24', '2025-09-02 07:27:01');
 
 -- --------------------------------------------------------
 
@@ -523,7 +523,7 @@ CREATE TABLE IF NOT EXISTS `project_work_orders` (
   `work_order_gst_cess_amount` decimal(15,2) NOT NULL,
   `work_order_administrative_cost` decimal(15,2) NOT NULL,
   `work_order_effective_cess_amount` decimal(15,2) NOT NULL,
-  `work_order_approval_letter` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci	 NOT NULL,
+  `work_order_approval_letter` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `employer_id` int NOT NULL,
   `manager_id` int NOT NULL,
   `engineer_id` int NOT NULL,
@@ -533,7 +533,7 @@ CREATE TABLE IF NOT EXISTS `project_work_orders` (
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci	;
+) ENGINE=MyISAM AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `project_work_orders`
@@ -573,7 +573,7 @@ CREATE TABLE IF NOT EXISTS `razorpay_transactions` (
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `order_id` (`order_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci	;
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `razorpay_transactions`
@@ -602,7 +602,7 @@ CREATE TABLE IF NOT EXISTS `roles` (
   `is_active` int NOT NULL COMMENT '1=active, 2=inactive, 3=deleted	',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci	;
+) ENGINE=MyISAM AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `roles`
@@ -655,6 +655,7 @@ INSERT INTO `role_permissions` (`role_id`, `permission_id`) VALUES
 (3, 10),
 (3, 11),
 (7, 1),
+(7, 3),
 (7, 7),
 (7, 8),
 (7, 9),
@@ -762,16 +763,16 @@ CREATE TABLE IF NOT EXISTS `users` (
   `is_active` int NOT NULL COMMENT '1=active, 2=inactive, 3=deleted',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci	;
+) ENGINE=MyISAM AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `users`
 --
 
 INSERT INTO `users` (`id`, `name`, `email`, `password`, `phone`, `gender`, `state_id`, `district_id`, `taluka_id`, `village_id`, `address`, `role`, `gstn`, `pancard`, `aadhaar`, `is_active`, `created_at`) VALUES
-(1, 'Super Admin', 'superadmin@gmail.com', '17c4520f6cfd1ab53d8745e84681eb49', 0, 'M', 0, 0, 0, 0, '', 1, '', '', '', 1, '2025-08-24 16:34:52'),
+(1, 'Super Admin', 'superadmin@gmail.com', '17c4520f6cfd1ab53d8745e84681eb49', 1234567895, 'M', 14, 27, 27, 2, '', 1, '', '', '', 1, '2025-08-24 16:34:52'),
 (18, 'Babasaheb Atpadkar', 'babasahebatpadkar@gmail.com', 'e10adc3949ba59abbe56e057f20f883e', 2147483647, 'M', 14, 27, 27, 11, 'S/O: Vithoba Atpadkar, 2852 - A, Uran Karanja Road, Dawournagar,', 3, '27AAAAP0267H2ZN', 'ADFGO5448Y', '456789215654', 1, '2025-08-29 19:02:17'),
-(19, 'Sai Atpadkar', 'saiatpadkar15@gmail.com', 'e10adc3949ba59abbe56e057f20f883e', 1234567899, 'M', 14, 27, 27, 7, '0', 7, '27AAAAP0267H2ZP', 'AMJUP5668H', '809507752953', 1, '2025-08-30 13:06:54');
+(19, 'Sai Atpadkar  ', 'saiatpadkar15@gmail.com', 'e10adc3949ba59abbe56e057f20f883e', 1234567899, 'M', 14, 27, 27, 7, 'karanja', 7, '27AAAAP0267H2ZP', 'AMJUP5668H', '809507752953', 1, '2025-08-30 13:06:54');
 
 -- --------------------------------------------------------
 

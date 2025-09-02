@@ -63,3 +63,7 @@
 [19-Aug-2025 06:09:28 UTC] PHP   2. header($header = 'Location: projects.php') C:\wamp64\www\CORE-MBOCW-CESS\dashboard\save-project.php:146
 [19-Aug-2025 06:35:21 UTC] Error in save-project.php: Failed to upload file for work order: glpi_selected_module_class_diagram.png
 [19-Aug-2025 06:43:31 UTC] Error in save-project.php: Failed to upload file for work order: Bullish EMA.png
+[02-Sep-2025 09:13:53 UTC] Error in save-project.php: Can't update table 'projects' in stored function/trigger because it is already used by statement which invoked this stored function/trigger.
+[02-Sep-2025 09:20:36 UTC] Error in save-project.php: Can't update table 'projects' in stored function/trigger because it is already used by statement which invoked this stored function/trigger.
+[02-Sep-2025 09:29:51 UTC] Error in save-project.php: Failed to update project_id: 
+[02-Sep-2025 09:33:07 UTC] Error in save-project.php: Failed to upload file for work order: Bullish EMA.png

@@ -74,6 +74,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $project_id = $project_stmt->insert_id;
 
+        // Step 2: Fetch codes for category, type, and authority
+        $cat_res = $conn->query("SELECT UPPER(LEFT(name,3)) AS code FROM project_categories WHERE id = $project_category_id");
+        $type_res = $conn->query("SELECT UPPER(LEFT(name,3)) AS code FROM project_types WHERE id = $project_type_id");
+        $auth_res = $conn->query("SELECT UPPER(LEFT(name,3)) AS code FROM local_authorities WHERE id = $local_authority_id");
+
+        $cat_code = ($cat_res->num_rows > 0) ? $cat_res->fetch_assoc()['code'] : "CAT";
+        $type_code = ($type_res->num_rows > 0) ? $type_res->fetch_assoc()['code'] : "TYP";
+        $auth_code = ($auth_res->num_rows > 0) ? $auth_res->fetch_assoc()['code'] : "LOC";
+
+        // Step 3: Generate Project ID
+        $generated_project_id = $cat_code . $type_code . $auth_code . $project_id;
+
+        // Step 4: Update project_id in projects table
+        $update_stmt = $conn->prepare("UPDATE projects SET project_id = ? WHERE id = ?");
+        $update_stmt->bind_param("si", $generated_project_id, $project_id);
+        $update_stmt->execute();
+
+        if ($update_stmt->affected_rows === 0) {
+            throw new Exception("Failed to update project_id: " . $update_stmt->error);
+        }
+
         // Step 2: Loop through and insert into project_work_orders table
         $total_work_orders = count($work_order_numbers);
         if ($total_work_orders > 0) {

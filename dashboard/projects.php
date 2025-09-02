@@ -103,6 +103,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
                             <th>Name</th>
                             <th>Category</th>
                             <th>Type</th>
+                            <th>Authority</th>
                             <th>Cost</th>
                             <th>Cess</th>
                             <th>Status</th>
@@ -116,13 +117,16 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                 p.*,
                                 IFNULL(SUM(pwo.work_order_effective_cess_amount), 0) AS total_cess,
                                 pt.name AS project_type_name,
-                                pc.name AS project_category_name
+                                pc.name AS project_category_name,
+                                la.name AS local_authority_name
                             FROM
                                 projects AS p
                             LEFT JOIN
                                 project_types AS pt ON p.project_type_id = pt.id
                             LEFT JOIN
                                 project_categories AS pc ON p.project_category_id = pc.id
+                            LEFT JOIN 
+                                local_authorities AS la ON p.local_authority_id = la.id
                             LEFT JOIN
                                 project_work_orders AS pwo ON p.id = pwo.project_id
                             GROUP BY
@@ -136,9 +140,10 @@ scratch. This page gets rid of all links and provides the needed markup only.
                             while ($row = mysqli_fetch_assoc($result)) {
                                 echo "<tr>";
                                 echo "<td>{$sr}</td>";
-                                echo "<td>" . htmlspecialchars($row['project_name']) . "</td>";
-                                echo "<td>" . htmlspecialchars($row['project_category_name']) . "</td>";
-                                echo "<td>" . htmlspecialchars($row['project_type_name']) . "</td>";
+                                echo "<td>" . htmlspecialchars($row['project_name'] ?? '') . "</td>";
+                                echo "<td>" . htmlspecialchars($row['project_category_name'] ?? '') . "</td>";
+                                echo "<td>" . htmlspecialchars($row['project_type_name'] ?? '') . "</td>";
+                                echo "<td>" . htmlspecialchars($row['local_authority_name'] ?? '') . "</td>";
                                 echo "<td>₹" . number_format($row['construction_cost'], 2) . "</td>";
                                 echo "<td>₹" . number_format($row['total_cess'] ?? 0, 2) . "</td>";
                                 echo "<td>" . htmlspecialchars($row['status']) . "</td>";
