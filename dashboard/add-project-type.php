@@ -11,15 +11,15 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
   $category_id      = intval($_POST['category_id'] ?? 0);
   $name             = trim($_POST['name'] ?? '');
   $description      = trim($_POST['description'] ?? '');
-  $cess_trigger     = trim($_POST['cess_trigger'] ?? '');
-  $how_cess_is_paid = trim($_POST['how_cess_is_paid'] ?? '');
+ // $cess_trigger     = trim($_POST['cess_trigger'] ?? '');
+//  $how_cess_is_paid = trim($_POST['how_cess_is_paid'] ?? '');
   $is_active        = intval($_POST['is_active'] ?? 1);
 
   if ($category_id<=0 || $name==='') {
     $_SESSION['error'] = "Category and Name are required.";
   } else {
-    $stmt = $conn->prepare("INSERT INTO project_types (category_id, name, description, cess_trigger, how_cess_is_paid, is_active) VALUES (?,?,?,?,?,?)");
-    $stmt->bind_param("issssi", $category_id, $name, $description, $cess_trigger, $how_cess_is_paid, $is_active);
+    $stmt = $conn->prepare("INSERT INTO project_types (category_id, name, description, is_active) VALUES (?,?,?,?)");
+    $stmt->bind_param("isss", $category_id, $name, $description, $is_active);
     if ($stmt->execute()) {
       $_SESSION['success'] = "Project Type added successfully.";
       header("Location: project-types.php"); exit;
@@ -84,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
                 <textarea name="description" class="form-control" rows="3" placeholder="Optional"></textarea>
               </div>
 
-              <div class="form-group">
+              <!-- <div class="form-group">
                 <label>Cess Trigger</label>
                 <textarea name="cess_trigger" class="form-control" rows="3" placeholder="e.g., when total cost exceeds X"></textarea>
               </div>
@@ -92,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
               <div class="form-group">
                 <label>How Cess Is Paid</label>
                 <textarea name="how_cess_is_paid" class="form-control" rows="3" placeholder="e.g., paid monthly/quarterly via portal"></textarea>
-              </div>
+              </div> -->
 
               <div class="form-group">
                 <label>Status</label>

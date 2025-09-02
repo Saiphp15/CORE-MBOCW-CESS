@@ -62,14 +62,14 @@ if (!$row) { $_SESSION['error']="Record not found."; header("Location: project-t
                 <label>Description</label>
                 <textarea class="form-control" rows="3" readonly><?= htmlspecialchars($row['description']); ?></textarea>
               </div>
-              <div class="form-group">
+              <!-- <div class="form-group">
                 <label>Cess Trigger</label>
                 <textarea class="form-control" rows="3" readonly><?= htmlspecialchars($row['cess_trigger']); ?></textarea>
               </div>
               <div class="form-group">
                 <label>How Cess Is Paid</label>
                 <textarea class="form-control" rows="3" readonly><?= htmlspecialchars($row['how_cess_is_paid']); ?></textarea>
-              </div>
+              </div> -->
               <div class="form-group">
                 <label>Status</label>
                 <input class="form-control" value="<?= $row['is_active'] ? 'Active' : 'Inactive'; ?>" readonly>

@@ -74,7 +74,7 @@ if (!$row) { die("Record not found"); }
                 <textarea name="description" class="form-control" rows="3"><?= htmlspecialchars($row['description']); ?></textarea>
               </div>
 
-              <div class="form-group">
+              <!-- <div class="form-group">
                 <label>Cess Trigger</label>
                 <textarea name="cess_trigger" class="form-control" rows="3"><?= htmlspecialchars($row['cess_trigger']); ?></textarea>
               </div>
@@ -82,7 +82,7 @@ if (!$row) { die("Record not found"); }
               <div class="form-group">
                 <label>How Cess Is Paid</label>
                 <textarea name="how_cess_is_paid" class="form-control" rows="3"><?= htmlspecialchars($row['how_cess_is_paid']); ?></textarea>
-              </div>
+              </div> -->
 
               <div class="form-group">
                 <label>Status</label>
