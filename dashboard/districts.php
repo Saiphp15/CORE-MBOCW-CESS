@@ -163,7 +163,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
                             while ($row = mysqli_fetch_assoc($result)) {
                                 $isActive = ($row['active_status'] == 1) ? 'checked' : '';
                                 $statusText = ($row['active_status'] == 1) ? 'Active' : 'Inactive';
-                                $stateName = ($row['state_id'] == 21) ? 'Maharashtra' : 'Other';
+                                $stateName = ($row['state_id'] == 14) ? 'Maharashtra' : 'Other';
 
                                 echo "<tr>";
                                 echo "<td>".$sr++."</td>";

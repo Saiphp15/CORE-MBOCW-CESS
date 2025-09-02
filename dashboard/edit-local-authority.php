@@ -28,6 +28,18 @@ $stmt->close();
 $local_authority_types = $conn->query("SELECT id, name FROM local_authority_types")->fetch_all(MYSQLI_ASSOC);
 $districts = $conn->query("SELECT id, name FROM districts")->fetch_all(MYSQLI_ASSOC);
 
+// Fetch talukas and villages based on existing selection
+$talukas = [];
+$villages = [];
+if( $row['district_id'] ) {
+    $district_id = isset($row['district_id']) ? $row['district_id'] : 0;
+    $talukas = $conn->query("SELECT id, name FROM talukas WHERE district_id=$district_id")->fetch_all(MYSQLI_ASSOC);
+}
+if( $row['taluka_id'] ) {
+    $taluka_id = isset($row['taluka_id']) ? $row['taluka_id'] : 0;
+    $villages = $conn->query("SELECT id, name FROM villages WHERE taluka_id=$taluka_id")->fetch_all(MYSQLI_ASSOC);
+}
+$village_id = isset($row['village_id']) ? $row['village_id'] : 0;
 ?>
 <!DOCTYPE html>
 <!--
@@ -106,32 +118,24 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                 }
                             ?>
                             <form action="update-local-authority.php" method="post" enctype="multipart/form-data">
-                                <input type="text" name="id" value="<?php echo $row['id']; ?>">
-                            <h3>Basic Information</h3>
+                                <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
+                                <h3>Basic Information</h3>
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="name" class="form-label">Authority Name</label>
-                                            <input type="text" class="form-control" id="name" name="name" value="<?php echo htmlspecialchars($row['name']); ?>" required>
+                                            <input type="text" class="form-control" id="name" name="name" value="<?php echo htmlspecialchars($row['name'] ?? ''); ?>" required>
                                         </div>
                                     </div>
-                                    <?php //echo '<pre>'; print_r($local_authority_types); die(); ?>
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>Authority Type</label>
-                                            <?php $selected_id = isset($edit_data['type_id']) ? $edit_data['type_id'] : ''; ?>
-
                                             <select name="type_id" id="type_id" class="form-control" required>
-                                            <option value="">-- Select Authority Type --</option>
-                                            <?php foreach ($local_authority_types as $authority_type): ?>
-                                                <option value="<?= $authority_type['id'] ?>"
-                                                    <?= ($authority_type['id'] == $selected_id) ? 'selected' : '' ?>>
-                                                    <?= htmlspecialchars($authority_type['name']) ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
-
-
+                                                <option value="">-- Select Authority Type --</option>
+                                                <?php foreach ($local_authority_types as $authority_type): ?>
+                                                    <option value="<?= $authority_type['id'] ?>" <?= ($authority_type['id'] == $row['type_id']) ? 'selected' : '' ?>><?= htmlspecialchars($authority_type['name']) ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
                                         </div>
                                     </div>
                                 </div>
@@ -153,7 +157,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                             <select name="district_id" id="district_id" class="form-control">
                                                 <option value="">Choose District</option>
                                                 <?php foreach ($districts as $district): ?>
-                                                <option value="<?= $district['id'] ?>"><?= $district['name'] ?></option>
+                                                    <option value="<?= $district['id'] ?>" <?= ($district['id'] == $district_id) ? 'selected' : '' ?>><?= htmlspecialchars($district['name']) ?></option>
                                                 <?php endforeach; ?>
                                             </select>
                                         </div>
@@ -163,6 +167,9 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                             <label>Taluka</label>
                                             <select name="taluka_id" id="taluka_id" class="form-control">
                                                 <option value="">Choose Taluka</option>
+                                                <?php foreach ($talukas as $taluka): ?>
+                                                    <option value="<?= $taluka['id'] ?>" <?= ($taluka['id'] == $taluka_id) ? 'selected' : '' ?>><?= htmlspecialchars($taluka['name']) ?></option>
+                                                <?php endforeach; ?>
                                             </select>
                                         </div>
                                     </div>
@@ -171,13 +178,18 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                             <label>Village</label>
                                             <select name="village_id" id="village_id" class="form-control">
                                                 <option value="">Choose Village</option>
+                                                <?php foreach ($villages as $village): ?>
+                                                    <option value="<?= $village['id'] ?>" <?= ($village['id'] == $village_id) ? 'selected' : '' ?>><?= htmlspecialchars($village['name']) ?></option>
+                                                <?php endforeach; ?>
                                             </select>
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-12">
                                         <div class="form-group">
                                             <label>Address</label>
-                                            <textarea name="address" class="form-control" placeholder="Enter Authority Address"></textarea>
+                                            <textarea name="address" class="form-control" placeholder="Enter Authority Address">
+                                                <?= htmlspecialchars($row['address'] ?? '') ?>
+                                            </textarea>
                                         </div>
                                     </div>
                                 </div>

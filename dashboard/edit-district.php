@@ -99,7 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                 <div class="form-group">
                                     <label>State Name</label>
                                     <input type="text" class="form-control" value="Maharashtra" readonly>
-                                    <input type="hidden" name="state_id" value="21">
+                                    <input type="hidden" name="state_id" value="14">
                                 </div>                                
                                 <div class="form-group">
                                     <label>Status</label>

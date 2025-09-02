@@ -142,7 +142,5 @@ $stmt->close();
         });
         // Get references to the dropdowns
     </script>
-
 </body>
-
 </html>

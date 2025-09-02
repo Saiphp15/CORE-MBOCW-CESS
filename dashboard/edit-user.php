@@ -40,6 +40,17 @@ $d_res = mysqli_query($conn, $d_sql);
 while ($row = mysqli_fetch_assoc($d_res)) {
     $districts[] = $row;
 }
+
+$talukas = [];
+$villages = [];
+if( $user['district_id'] ) {
+    $district_id = $user['district_id'];
+    $talukas = $conn->query("SELECT id, name FROM talukas WHERE district_id=$district_id")->fetch_all(MYSQLI_ASSOC);
+}
+if( $user['taluka_id'] ) {
+    $taluka_id = $user['taluka_id'];
+    $villages = $conn->query("SELECT id, name FROM villages WHERE taluka_id=$taluka_id")->fetch_all(MYSQLI_ASSOC);
+}
 ?>
 <!DOCTYPE html>
 <!--
@@ -47,13 +58,12 @@ This is a starter template page. Use this page to start your new project from
 scratch. This page gets rid of all links and provides the needed markup only.
 -->
 <html lang="en">
-
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
 
-    <title>MBOCWCESS Portal | Add User</title>
+    <title>MBOCWCESS Portal | Edit User</title>
     <link rel="icon" href="../assets/img/favicon_io/favicon.ico" type="image/x-icon">
 
     <!-- Font Awesome Icons -->
@@ -63,7 +73,6 @@ scratch. This page gets rid of all links and provides the needed markup only.
     <!-- Google Font: Source Sans Pro -->
     <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet">
 </head>
-
 <body class="hold-transition sidebar-mini">
     <div class="wrapper">
 
@@ -80,12 +89,12 @@ scratch. This page gets rid of all links and provides the needed markup only.
                 <div class="container-fluid">
                     <div class="row mb-2">
                         <div class="col-sm-6">
-                            <h1 class="m-0 text-dark">Add User</h1>
+                            <h1 class="m-0 text-dark">Edit User</h1>
                         </div><!-- /.col -->
                         <div class="col-sm-6">
                             <ol class="breadcrumb float-sm-right">
                                 <li class="breadcrumb-item"><a href="#">Home</a></li>
-                                <li class="breadcrumb-item active">Add User</li>
+                                <li class="breadcrumb-item active">Edit User</li>
                             </ol>
                         </div><!-- /.col -->
                     </div><!-- /.row -->
@@ -122,22 +131,19 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                             <div class="col-md-6">
                                                 <div class="form-group">
                                                     <label>Full Name</label>
-                                                    <input type="text" name="name" class="form-control"
-                                                        value="<?= $user['name'] ?>" required>
+                                                    <input type="text" name="name" class="form-control" value="<?= $user['name'] ?>" required>
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
                                                 <div class="form-group">
                                                     <label>Email</label>
-                                                    <input type="email" name="email" class="form-control"
-                                                        value="<?= $user['email'] ?>" required>
+                                                    <input type="email" name="email" class="form-control" value="<?= $user['email'] ?>" readonly>
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
                                                 <div class="form-group">
                                                     <label>Contact Number</label>
-                                                    <input type="tel" name="phone" class="form-control"
-                                                        value="<?= $user['phone'] ?>" required>
+                                                    <input type="tel" name="phone" class="form-control" value="<?= $user['phone'] ?>" required>
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
@@ -145,14 +151,9 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                                     <label>Gender</label>
                                                     <select name="gender" class="form-control" required>
                                                         <option value="">-- Select Gender --</option>
-                                                        <option value="M" <?= $user['gender'] == 'M' ? 'selected' : '' ?>>
-                                                            Male
-                                                        </option>
-                                                        <option value="F" <?= $user['gender'] == 'F' ? 'selected' : '' ?>>
-                                                            Female</option>
-                                                        <option value="O" <?= $user['gender'] == 'O' ? 'selected' : '' ?>>
-                                                            Other
-                                                        </option>
+                                                        <option value="M" <?= $user['gender'] == 'M' ? 'selected' : '' ?>>Male</option>
+                                                        <option value="F" <?= $user['gender'] == 'F' ? 'selected' : '' ?>>Female</option>
+                                                        <option value="O" <?= $user['gender'] == 'O' ? 'selected' : '' ?>>Other</option>
                                                     </select>
                                                 </div>
                                             </div>
@@ -162,9 +163,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                                     <select name="role" class="form-control">
                                                         <option value="">Choose role</option>
                                                         <?php foreach ($roles as $role): ?>
-                                                            <option value="<?= $role['id'] ?>" <?= $user['role'] == $role['id'] ? 'selected' : '' ?>>
-                                                                <?= $role['name'] ?>
-                                                            </option>
+                                                            <option value="<?= $role['id'] ?>" <?= $user['role'] == $role['id'] ? 'selected' : '' ?>><?= $role['name'] ?></option>
                                                         <?php endforeach; ?>
                                                     </select>
                                                 </div>
@@ -172,22 +171,19 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                             <div class="col-md-6">
                                                 <div class="form-group">
                                                     <label>GSTN</label>
-                                                    <input type="text" name="gstn" class="form-control"
-                                                        value="<?= $user['gstn'] ?>" required>
+                                                    <input type="text" name="gstn" class="form-control" value="<?= $user['gstn'] ?>" required>
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
                                                 <div class="form-group">
                                                     <label>Pancard</label>
-                                                    <input type="text" name="pancard" class="form-control"
-                                                        value="<?= $user['pancard'] ?>" required>
+                                                    <input type="text" name="pancard" class="form-control" value="<?= $user['pancard'] ?>" required>
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
                                                 <div class="form-group">
                                                     <label>Aadhaar</label>
-                                                    <input type="text" name="aadhaar" class="form-control"
-                                                        value="<?= $user['aadhaar'] ?>" required>
+                                                    <input type="text" name="aadhaar" class="form-control" value="<?= $user['aadhaar'] ?>" required>
                                                 </div>
                                             </div>
                                         </div>
@@ -198,21 +194,17 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                                 <div class="form-group">
                                                     <label>State</label>
                                                     <select name="state_id" class="form-control">
-                                                        <option value="14" <?= $user['state_id'] == 14 ? 'selected' : '' ?>>
-                                                            Maharashtra</option>
+                                                        <option value="14" <?= $user['state_id'] == 14 ? 'selected' : '' ?>>Maharashtra</option>
                                                     </select>
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
                                                 <div class="form-group">
                                                     <label>District</label>
-                                                    <select name="district_id" class="form-control">
+                                                    <select name="district_id" id="district_id" class="form-control">
                                                         <option value="">Choose District</option>
                                                         <?php foreach ($districts as $district): ?>
-                                                            <option value="<?= $district['id'] ?>"
-                                                                <?= $user['district_id'] == $district['id'] ? 'selected' : '' ?>>
-                                                                <?= $district['name'] ?>
-                                                            </option>
+                                                            <option value="<?= $district['id'] ?>" <?= $user['district_id'] == $district['id'] ? 'selected' : '' ?>><?= $district['name'] ?></option>
                                                         <?php endforeach; ?>
                                                     </select>
                                                 </div>
@@ -220,26 +212,29 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                             <div class="col-md-6">
                                                 <div class="form-group">
                                                     <label>Taluka</label>
-                                                    <select name="taluka_id" class="form-control">
-                                                        <option value="<?= $user['taluka_id'] ?>">Selected Taluka
-                                                        </option>
+                                                    <select name="taluka_id" id="taluka_id" class="form-control">
+                                                        <option value="">Choose Taluka</option>
+                                                        <?php foreach ($talukas as $taluka): ?>
+                                                            <option value="<?= $taluka['id'] ?>" <?= $user['taluka_id'] == $taluka['id'] ? 'selected' : '' ?>><?= $taluka['name'] ?></option>
+                                                        <?php endforeach; ?>
                                                     </select>
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
                                                 <div class="form-group">
                                                     <label>Village</label>
-                                                    <select name="village_id" class="form-control">
-                                                        <option value="<?= $user['village_id'] ?>">Selected Village
-                                                        </option>
+                                                    <select name="village_id" id="village_id" class="form-control">
+                                                        <option value="">Choose Village</option>
+                                                        <?php foreach ($villages as $village): ?>
+                                                            <option value="<?= $village['id'] ?>" <?= $user['village_id'] == $village['id'] ? 'selected' : '' ?>><?= $village['name'] ?></option>
+                                                        <?php endforeach; ?>
                                                     </select>
                                                 </div>
                                             </div>
-                                            <div class="col-md-6">
+                                            <div class="col-md-12">
                                                 <div class="form-group">
                                                     <label>Address</label>
-                                                    <input type="text" name="address" class="form-control"
-                                                        value="<?= $user['address'] ?>" required>
+                                                    <textarea name="address" id="address" class="form-control"><?= $user['address'] ?></textarea>
                                                 </div>
                                             </div>
                                         </div>
@@ -250,8 +245,91 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                     </form>
                                 </div>
                             </div>
-                        </div>
+                        </div><!-- /.card-body -->
                     </div>
-                </div>
-            </div>
+                </div><!-- /.container-fluid -->
+            </div><!-- /.content -->
         </div>
+        <!-- /.content-wrapper -->
+
+        <!-- Main Footer -->
+        <?php include('includes/footer.php'); ?>
+    </div>
+    <!-- ./wrapper -->
+
+    <!-- REQUIRED SCRIPTS -->
+
+    <!-- jQuery -->
+    <script src="../plugins/jquery/jquery.min.js"></script>
+    <!-- Bootstrap 4 -->
+    <script src="../plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <!-- AdminLTE App -->
+    <script src="../dist/js/adminlte.min.js"></script>
+    <!-- AJAX for dynamic Project Type -->
+    <script>
+        // Get references to the dropdowns
+        const districtSelect = document.getElementById('district_id');
+        const talukaSelect = document.getElementById('taluka_id');
+        const villageSelect = document.getElementById('village_id');
+
+        // Function to fetch data from the server
+        async function fetchData(url, bodyData) {
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: bodyData
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Fetch error:', error);
+                return []; // Return empty array on error
+            }
+        }
+
+        // Function to populate a dropdown
+        function populateDropdown(selectElement, data, placeholderText) {
+            // Clear existing options
+            selectElement.innerHTML = `<option value="">${placeholderText}</option>`;
+            // Add new options from the fetched data
+            data.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.id;
+                option.textContent = item.name;
+                selectElement.appendChild(option);
+            });
+        }
+
+        // Event listener for the District dropdown
+        districtSelect.addEventListener('change', async () => {
+            const districtId = districtSelect.value;
+            // Clear taluka and village dropdowns
+            populateDropdown(talukaSelect, [], 'Choose Taluka');
+            populateDropdown(villageSelect, [], 'Choose Village');
+
+            if (districtId) {
+                const talukas = await fetchData('fetch_data.php', `type=talukas&id=${districtId}`);
+                populateDropdown(talukaSelect, talukas, 'Choose Taluka');
+            }
+        });
+
+        // Event listener for the Taluka dropdown
+        talukaSelect.addEventListener('change', async () => {
+            const talukaId = talukaSelect.value;
+            // Clear village dropdown
+            populateDropdown(villageSelect, [], 'Choose Village');
+
+            if (talukaId) {
+                const villages = await fetchData('fetch_data.php', `type=villages&id=${talukaId}`);
+                populateDropdown(villageSelect, villages, 'Choose Village');
+            }
+        });
+    </script>
+</body>
+</html>

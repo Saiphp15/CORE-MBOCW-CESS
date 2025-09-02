@@ -6,86 +6,209 @@ if (!isset($_SESSION['user_id'])) {
 }
 require_once '../config/db.php';
 
-$id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+// Check if ID provided
+if (!isset($_GET['id']) || empty($_GET['id'])) {
+    die("Invalid Request");
+}
+$id = intval($_GET['id']);
 
-// fetch record
-$sql = "SELECT la.*, 
-               at.name AS authority_type_name, 
-               s.name AS state_name, 
-               d.name AS district_name, 
-               t.name AS taluka_name, 
-               v.name AS village_name
-        FROM local_authorities la
-        LEFT JOIN authority_types at ON la.authority_type_id = at.id
-        LEFT JOIN states s ON la.state_id = s.id
-        LEFT JOIN districts d ON la.district_id = d.id
-        LEFT JOIN talukas t ON la.taluka_id = t.id
-        LEFT JOIN villages v ON la.village_id = v.id
-        WHERE la.id = $id";
+// Fetch existing record
+$stmt = $conn->prepare("SELECT * FROM local_authorities WHERE id = ?");
+$stmt->bind_param("i", $id);
+$stmt->execute();
+$result = $stmt->get_result();
 
-$result = mysqli_query($conn, $sql);
+if ($result->num_rows === 0) {
+    die("Record not found");
+}
+$row = $result->fetch_assoc();
+$stmt->close();
 
-$row = mysqli_fetch_assoc($result);
+// Fetch required dropdown values
+$local_authority_types = $conn->query("SELECT id, name FROM local_authority_types")->fetch_all(MYSQLI_ASSOC);
+$districts = $conn->query("SELECT id, name FROM districts")->fetch_all(MYSQLI_ASSOC);
+
+// Fetch talukas and villages based on existing selection
+$talukas = [];
+$villages = [];
+if( $row['district_id'] ) {
+    $district_id = isset($row['district_id']) ? $row['district_id'] : 0;
+    $talukas = $conn->query("SELECT id, name FROM talukas WHERE district_id=$district_id")->fetch_all(MYSQLI_ASSOC);
+}
+if( $row['taluka_id'] ) {
+    $taluka_id = isset($row['taluka_id']) ? $row['taluka_id'] : 0;
+    $villages = $conn->query("SELECT id, name FROM villages WHERE taluka_id=$taluka_id")->fetch_all(MYSQLI_ASSOC);
+}
+$village_id = isset($row['village_id']) ? $row['village_id'] : 0;
 ?>
 <!DOCTYPE html>
-<html>
+<!--
+This is a starter template page. Use this page to start your new project from
+scratch. This page gets rid of all links and provides the needed markup only.
+-->
+<html lang="en">
 <head>
-    <title>View Authority</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <title>MBOCWCESS Portal | View Local Authority</title>
+  <link rel="icon" href="../assets/img/favicon_io/favicon.ico" type="image/x-icon">
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="../plugins/fontawesome-free/css/all.min.css">
+  <!-- Theme style -->
+  <link rel="stylesheet" href="../dist/css/adminlte.min.css">
+  <!-- Google Font: Source Sans Pro -->
+  <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet">
 </head>
-<body class="container mt-4">
+<body class="hold-transition sidebar-mini">
+<div class="wrapper">
 
-    <h3>Basic Information</h3>
-    <div class="row">
-        <div class="col-md-6">
-            <div class="form-group">
-                <label>Authority Name</label>
-                <p class="form-control-plaintext"><?= htmlspecialchars($row['name']); ?></p>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="form-group">
-                <label>Authority Type</label>
-                <p class="form-control-plaintext"><?= htmlspecialchars($row['authority_type_name']); ?></p>
-            </div>
-        </div>
+  <!-- Navbar -->
+  <?php include('includes/navbar.php'); ?>
+  <!-- /.navbar -->
+
+  <!-- Main Sidebar Container -->
+  <?php include('includes/sidebar.php'); ?>
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 class="m-0 text-dark">View Local Authority</h1>
+          </div><!-- /.col -->
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="#">Home</a></li>
+              <li class="breadcrumb-item active">View Local Authority</li>
+            </ol>
+          </div><!-- /.col -->
+        </div><!-- /.row -->
+      </div><!-- /.container-fluid -->
     </div>
+    <!-- /.content-header -->
 
-    <h3>Authority Location</h3>
-    <div class="row">
-        <div class="col-md-6">
-            <div class="form-group">
-                <label>State</label>
-                <p class="form-control-plaintext"><?= htmlspecialchars($row['state_name']); ?></p>
+    <!-- Main content -->
+    <div class="content">
+        <div class="container-fluid">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">View Authority</h3>
+                    <div class="card-tools">
+                        <a href="local-authorities.php" class="btn btn-primary" ><i class="fas fa-eye"></i>Local Authority List</a> 
+                        <button type="button" class="btn btn-tool" data-card-widget="collapse" data-toggle="tooltip" title="Collapse"><i class="fas fa-minus"></i></button>
+                        <button type="button" class="btn btn-tool" data-card-widget="remove" data-toggle="tooltip" title="Remove"><i class="fas fa-times"></i></button>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row">
+                        <div class="col-md-12 ">
+                            
+                            <h3>Basic Information</h3>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="name" class="form-label">Authority Name</label>
+                                        <input type="text" class="form-control" id="name" name="name" value="<?php echo htmlspecialchars($row['name'] ?? ''); ?>" readonly>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Authority Type</label>
+                                        <select name="type_id" id="type_id" class="form-control" readonly>
+                                            <option value="">-- Select Authority Type --</option>
+                                            <?php foreach ($local_authority_types as $authority_type): ?>
+                                                <option value="<?= $authority_type['id'] ?>" <?= ($authority_type['id'] == $row['type_id']) ? 'selected' : '' ?>><?= htmlspecialchars($authority_type['name']) ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h3>Authority Location</h3>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>State</label>
+                                        <select name="state_id" id="state_id" class="form-control" readonly>
+                                            <option value="">Choose State</option>
+                                            <option value="14" selected>Maharashtra</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>District</label>
+                                        <select name="district_id" id="district_id" class="form-control" readonly>
+                                            <option value="">Choose District</option>
+                                            <?php foreach ($districts as $district): ?>
+                                                <option value="<?= $district['id'] ?>" <?= ($district['id'] == $district_id) ? 'selected' : '' ?>><?= htmlspecialchars($district['name']) ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Taluka</label>
+                                        <select name="taluka_id" id="taluka_id" class="form-control" readonly>
+                                            <option value="">Choose Taluka</option>
+                                            <?php foreach ($talukas as $taluka): ?>
+                                                <option value="<?= $taluka['id'] ?>" <?= ($taluka['id'] == $taluka_id) ? 'selected' : '' ?>><?= htmlspecialchars($taluka['name']) ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Village</label>
+                                        <select name="village_id" id="village_id" class="form-control" readonly>
+                                            <option value="">Choose Village</option>
+                                            <?php foreach ($villages as $village): ?>
+                                                <option value="<?= $village['id'] ?>" <?= ($village['id'] == $village_id) ? 'selected' : '' ?>><?= htmlspecialchars($village['name']) ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label>Address</label>
+                                        <textarea name="address" class="form-control" placeholder="Enter Authority Address" readonly>
+                                            <?= htmlspecialchars($row['address'] ?? '') ?>
+                                        </textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <br/><br/>
+                            <a href="local-authorities.php" class="btn btn-default ml-2">Back</a>
+                                   
+                        </div>
+                    </div>
+                </div>
+                <!-- /.card-body -->
             </div>
-        </div>
-        <div class="col-md-6">
-            <div class="form-group">
-                <label>District</label>
-                <p class="form-control-plaintext"><?= htmlspecialchars($row['district_name']); ?></p>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="form-group">
-                <label>Taluka</label>
-                <p class="form-control-plaintext"><?= htmlspecialchars($row['taluka_name']); ?></p>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="form-group">
-                <label>Village</label>
-                <p class="form-control-plaintext"><?= htmlspecialchars($row['village_name']); ?></p>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="form-group">
-                <label>Address</label>
-                <p class="form-control-plaintext"><?= nl2br(htmlspecialchars($row['address'])); ?></p>
-            </div>
-        </div>
+        </div><!-- /.container-fluid -->
     </div>
+    <!-- /.content -->
+  </div>
+  <!-- /.content-wrapper -->
 
-    <br/>
-    <a href="local-authorities.php" class="btn btn-secondary">Back</a>
+  <!-- Main Footer -->
+  <?php include('includes/footer.php'); ?>
+</div>
+<!-- ./wrapper -->
+
+<!-- REQUIRED SCRIPTS -->
+
+<!-- jQuery -->
+<script src="../plugins/jquery/jquery.min.js"></script>
+<!-- Bootstrap 4 -->
+<script src="../plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<!-- AdminLTE App -->
+<script src="../dist/js/adminlte.min.js"></script>
 </body>
 </html>
