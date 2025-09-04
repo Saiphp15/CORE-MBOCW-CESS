@@ -18,7 +18,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
 
-  <title>MBOCWCESS Portal | Local Authorities</title>
+  <title>MBOCWCESS Portal | Implementing Agencies</title>
   <link rel="icon" href="../assets/img/favicon_io/favicon.ico" type="image/x-icon">
 
   <!-- Font Awesome Icons -->
@@ -108,12 +108,12 @@ scratch. This page gets rid of all links and provides the needed markup only.
       <div class="container-fluid">
         <div class="row mb-2">
           <div class="col-sm-6">
-            <h1 class="m-0 text-dark">Local Authorities</h1>
+            <h1 class="m-0 text-dark">Implementing Agencies</h1>
           </div><!-- /.col -->
           <div class="col-sm-6">
             <ol class="breadcrumb float-sm-right">
               <li class="breadcrumb-item"><a href="#">Home</a></li>
-              <li class="breadcrumb-item active">Local Authorities</li>
+              <li class="breadcrumb-item active">Implementing Agencies</li>
             </ol>
           </div><!-- /.col -->
         </div><!-- /.row -->
@@ -126,11 +126,9 @@ scratch. This page gets rid of all links and provides the needed markup only.
         <div class="container-fluid">
             <div class="card">
             <div class="card-header">
-                <h3 class="card-title">Local Authorities</h3>
+                <h3 class="card-title">Implementing Agencies</h3>
                 <div class="card-tools">
-                    <a href="add-local-authority.php" class="btn btn-primary" ><i class="fas fa-plus"></i> Add Local Authority</a> 
-                    <button type="button" class="btn btn-tool" data-card-widget="collapse" data-toggle="tooltip" title="Collapse"><i class="fas fa-minus"></i></button>
-                    <button type="button" class="btn btn-tool" data-card-widget="remove" data-toggle="tooltip" title="Remove"><i class="fas fa-times"></i></button>
+                    <a href="add-local-authority.php" class="btn btn-primary" ><i class="fas fa-plus"></i> Add Implementing Agency</a> 
                 </div>
             </div>
             <!-- /.card-header -->
@@ -151,6 +149,8 @@ scratch. This page gets rid of all links and provides the needed markup only.
                             <th>#</th>
                             <th>Name</th>
                             <th>Type</th>
+                            <th>Department</th>
+                            <th>Sub Department</th>
                             <th>Address</th>
                             <th>CAFO Name</th>
                             <th>Email</th>
@@ -160,40 +160,49 @@ scratch. This page gets rid of all links and provides the needed markup only.
                     </thead>
                     <tbody>
                         <?php
-                        $sql = "
-                        SELECT la.*, lat.name AS type_name, u.name AS user_name, u.email AS contact_email, u.phone AS contact_phone
-                        FROM local_authorities la
-                        LEFT JOIN local_authority_types lat ON la.type_id = lat.id
-                        LEFT JOIN local_authorities_users lau ON la.id = lau.local_authority_id
-                        LEFT JOIN users u ON lau.user_id = u.id
-                        ORDER BY la.id DESC
-                        ";
-                        $result = mysqli_query($conn, $sql);
-                        $sr = 1;
-                        if (mysqli_num_rows($result) > 0) {
-                            while ($row = mysqli_fetch_assoc($result)) {
-                                $isActive = ($row['is_active'] == 1) ? 'checked' : '';
-                                $statusText = ($row['is_active'] == 1) ? 'Active' : 'Inactive';
+                            $sql = "
+                            SELECT la.*, 
+                                    lat.name AS type_name, 
+                                    ad.name as department_name, 
+                                    asd.name as subdepartment_name, 
+                                    u.name AS user_name, 
+                                    u.email AS user_email, 
+                                    u.phone AS user_phone
+                            FROM local_authorities la
+                            LEFT JOIN local_authority_types lat ON la.type_id = lat.id
+                            LEFT JOIN authority_departments ad ON la.authority_department_id = ad.id
+                            LEFT JOIN authority_subdepartments asd ON la.authority_subdepartment_id = asd.id
+                            LEFT JOIN local_authorities_users lau ON la.id = lau.local_authority_id
+                            LEFT JOIN users u ON lau.user_id = u.id
+                            ORDER BY la.id DESC
+                            ";
+                            $result = mysqli_query($conn, $sql);
+                            $sr = 1;
+                            if ($result && mysqli_num_rows($result) > 0) {
+                                while ($row = mysqli_fetch_assoc($result)) {
+                                    $isActive = ($row['is_active'] == 1) ? 'checked' : '';
+                                    $statusText = ($row['is_active'] == 1) ? 'Active' : 'Inactive';
 
-                                echo "<tr>";
-                                echo "<td>".$sr++."</td>";
-                                echo "<td>".htmlspecialchars($row['name'] ?? '')."</td>";
-                                echo "<td>".htmlspecialchars($row['type_name'] ?? '')."</td>";
-                                echo "<td>".htmlspecialchars($row['address'] ?? '')."</td>";
-                                echo "<td>".htmlspecialchars($row['user_name'] ?? '')."</td>";
-                                echo "<td>".htmlspecialchars($row['contact_email'] ?? '')."</td>";
-                                echo "<td>".htmlspecialchars($row['contact_phone'] ?? '')."</td>";
-                                echo "<td>
-                                        <label class='switch' title='$statusText'><input type='checkbox' data-id='{$row['id']}' id='activeToggle' onclick='return confirm(\"Are you sure you want to perform this action?\");' {$isActive}><span class='slider round'></span></label>
-                                        <a href='edit-local-authority.php?id=".$row['id']."' class='btn btn-sm btn-primary'><i class='fas fa-edit'></i></a>
-                                        <a href='view-local-authority.php?id=".$row['id']."' class='btn btn-sm btn-info' ><i class='fas fa-eye'></i></a>
-                                    </td>";
-                                echo "</tr>";
-                                $sr++;
+                                    echo "<tr>";
+                                    echo "<td>".$sr++."</td>";
+                                    echo "<td>".htmlspecialchars($row['name'] ?? '')."</td>";
+                                    echo "<td>".htmlspecialchars($row['type_name'] ?? '')."</td>";
+                                    echo "<td>".htmlspecialchars($row['department_name'] ?? '')."</td>";
+                                    echo "<td>".htmlspecialchars($row['subdepartment_name'] ?? '')."</td>";
+                                    echo "<td>".htmlspecialchars($row['address'] ?? '')."</td>";
+                                    echo "<td>".htmlspecialchars($row['user_name'] ?? '')."</td>";
+                                    echo "<td>".htmlspecialchars($row['user_email'] ?? '')."</td>";
+                                    echo "<td>".htmlspecialchars($row['user_phone'] ?? '')."</td>";
+                                    echo "<td>
+                                            <label class='switch' title='$statusText'><input type='checkbox' data-id='{$row['id']}' id='activeToggle' onclick='return confirm(\"Are you sure you want to perform this action?\");' {$isActive}><span class='slider'></span></label>
+                                            <a href='edit-local-authority.php?id=".$row['id']."' class='btn btn-sm btn-primary'><i class='fas fa-edit'></i></a>
+                                            <a href='view-local-authority.php?id=".$row['id']."' class='btn btn-sm btn-info'><i class='fas fa-eye'></i></a>
+                                        </td>";
+                                    echo "</tr>";
+                                }
+                            } else {
+                                echo "<tr><td colspan='11' class='text-center'>No authorities found</td></tr>";
                             }
-                        } else {
-                            echo "<tr><td colspan='8' class='text-center'>No Authorities found</td></tr>";
-                        }
                         ?>
                     </tbody>
                 </table>

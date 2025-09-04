@@ -129,8 +129,6 @@ scratch. This page gets rid of all links and provides the needed markup only.
                 <h3 class="card-title">Users</h3>
                 <div class="card-tools">
                     <a href="add-user.php" class="btn btn-primary" ><i class="fas fa-plus"></i> Add User</a> 
-                    <button type="button" class="btn btn-tool" data-card-widget="collapse" data-toggle="tooltip" title="Collapse"><i class="fas fa-minus"></i></button>
-                    <button type="button" class="btn btn-tool" data-card-widget="remove" data-toggle="tooltip" title="Remove"><i class="fas fa-times"></i></button>
                 </div>
             </div>
             <!-- /.card-header -->
@@ -158,14 +156,42 @@ scratch. This page gets rid of all links and provides the needed markup only.
                     </thead>
                     <tbody>
                         <?php
-                        $sql = "
-                            SELECT 
-                                u.id, u.name, u.email, u.phone, u.is_active, u.role,
-                                r.name AS role_name
-                            FROM users u
-                            LEFT JOIN roles r ON r.id = u.role
-                            ORDER BY u.id DESC
-                        ";
+                        $loggedInUserId     = $_SESSION['user_id'];
+                        $loggedInUserRole   = $_SESSION['user_role'];
+                        $sql = "";
+                        if ($loggedInUserId == 1 && $loggedInUserRole == 1) {
+                            // Superadmin: see all
+                            $sql = "
+                                SELECT 
+                                    u.id, u.name, u.email, u.phone, u.is_active, u.role,
+                                    r.name AS role_name
+                                FROM users u
+                                LEFT JOIN roles r ON r.id = u.role
+                                ORDER BY u.id DESC
+                            ";
+                        } elseif ($loggedInUserRole == 3) {
+                            // CAFO: see own + engineers under him
+                            $sql = "
+                                SELECT 
+                                    u.id, u.name, u.email, u.phone, u.is_active, u.role,
+                                    r.name AS role_name
+                                FROM users u
+                                LEFT JOIN roles r ON r.id = u.role
+                                WHERE u.id = $loggedInUserId OR u.created_by = $loggedInUserId
+                                ORDER BY u.id DESC";
+                        } elseif ($loggedInUserRole == 7) {
+                            // Engineer: see only his own
+                            $sql = "
+                                SELECT 
+                                    u.id, u.name, u.email, u.phone, u.is_active, u.role,
+                                    r.name AS role_name
+                                FROM users u
+                                LEFT JOIN roles r ON r.id = u.role
+                                WHERE u.id = $loggedInUserId 
+                                ORDER BY u.id DESC";
+                        }
+
+                        
                         $result = mysqli_query($conn, $sql);
                         $sr = 1;
                         if (mysqli_num_rows($result) > 0) {

@@ -8,9 +8,10 @@ require_once '../config/db.php';
 
 // Fetch required dropdown values
 $local_authority_types = $conn->query("SELECT id, name FROM local_authority_types")->fetch_all(MYSQLI_ASSOC);
-
+$authority_departments = $conn->query("SELECT id, name FROM authority_departments")->fetch_all(MYSQLI_ASSOC);
+$local_authority_subdepartments = $conn->query("SELECT id, name FROM authority_subdepartments")->fetch_all(MYSQLI_ASSOC);
 $districts = $conn->query("SELECT id, name FROM districts")->fetch_all(MYSQLI_ASSOC);
-
+$users = $conn->query("SELECT id, name FROM users where role=3 AND is_active != 3")->fetch_all(MYSQLI_ASSOC);
 ?>
 <!DOCTYPE html>
 <!--
@@ -23,7 +24,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
 
-  <title>MBOCWCESS Portal | Add New Local Authority</title>
+  <title>MBOCWCESS Portal | Add Implementing Agency</title>
   <link rel="icon" href="../assets/img/favicon_io/favicon.ico" type="image/x-icon">
 
   <!-- Font Awesome Icons -->
@@ -68,11 +69,9 @@ scratch. This page gets rid of all links and provides the needed markup only.
         <div class="container-fluid">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Add Authority</h3>
+                    <h3 class="card-title">Add Implementing Agency</h3>
                     <div class="card-tools">
-                        <a href="local-authorities.php" class="btn btn-primary" ><i class="fas fa-eye"></i>Local Authority List</a> 
-                        <button type="button" class="btn btn-tool" data-card-widget="collapse" data-toggle="tooltip" title="Collapse"><i class="fas fa-minus"></i></button>
-                        <button type="button" class="btn btn-tool" data-card-widget="remove" data-toggle="tooltip" title="Remove"><i class="fas fa-times"></i></button>
+                        <a href="local-authorities.php" class="btn btn-primary" ><i class="fas fa-eye"></i>Local Authority List</a>
                     </div>
                 </div>
                 <div class="card-body p-4">
@@ -93,19 +92,93 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">
-                                            <label for="authority_name" class="form-label">Authority Name</label>
-                                            <input type="text" class="form-control" id="authority_name" name="authority_name" value="<?php echo isset($_SESSION['old_values']['authority_name']) ? htmlspecialchars($_SESSION['old_values']['authority_name']) : ''; ?>" required>
+                                            <label for="name" class="form-label">Authority Name</label>
+                                            <input type="text" class="form-control" id="name" name="name" value="<?php echo isset($_SESSION['old_values']['name']) ? htmlspecialchars($_SESSION['old_values']['name']) : ''; ?>" >
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>Authority Type</label>
-                                            <select name="authority_type_id" id="authority_type_id" class="form-control" required>
+                                            <select name="authority_type_id" id="authority_type_id" class="form-control" >
                                                 <option value="">-- Select Authority Type --</option>
                                                 <?php foreach ($local_authority_types as $authority_type): ?>
-                                                <option value="<?= $authority_type['id'] ?>"><?= $authority_type['name'] ?></option>
+                                                    <option value="<?= $authority_type['id'] ?>" 
+                                                        <?= (isset($_SESSION['old_values']['authority_type_id']) 
+                                                            && $_SESSION['old_values']['authority_type_id'] == $authority_type['id']) ? 'selected' : '' ?>>
+                                                        <?= htmlspecialchars($authority_type['name']) ?>
+                                                    </option>
                                                 <?php endforeach; ?>
                                             </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>Authority Department</label>
+                                            <select name="department_id" id="department_id" class="form-control" >
+                                                <option value="">-- Select Department --</option>
+                                                <?php foreach ($authority_departments as $department): ?>
+                                                    <option value="<?= $department['id'] ?>" 
+                                                        <?= (isset($_SESSION['old_values']['department_id']) 
+                                                            && $_SESSION['old_values']['department_id'] == $department['id']) ? 'selected' : '' ?>>
+                                                        <?= htmlspecialchars($department['name']) ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>Authority Sub Department</label>
+                                            <select name="subdepartment_id" id="subdepartment_id" class="form-control" >
+                                                <option value="">-- Select Subdepartment --</option>
+                                                <?php foreach ($local_authority_subdepartments as $subdept): ?>
+                                                    <option value="<?= $subdept['id'] ?>" 
+                                                        <?= (isset($_SESSION['old_values']['subdepartment_id']) 
+                                                            && $_SESSION['old_values']['subdepartment_id'] == $subdept['id']) ? 'selected' : '' ?>>
+                                                        <?= htmlspecialchars($subdept['name']) ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <h3>Authority Documents</h3>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="pancard">PAN Card Number</label>
+                                            <input type="text" class="form-control" id="pancard" name="pancard" 
+                                                value="<?= isset($_SESSION['old_values']['pancard']) ? htmlspecialchars($_SESSION['old_values']['pancard']) : '' ?>" 
+                                                maxlength="10" placeholder="Enter PAN Number (e.g. ABCDE1234F)">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="pancard_path">Upload PAN Card</label>
+                                            <input type="file" class="form-control-file" id="pancard_path" name="pancard_path" accept="image/*,application/pdf">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="aadhaar">Aadhaar Number</label>
+                                            <input type="text" class="form-control" id="aadhaar" name="aadhaar" 
+                                                value="<?= isset($_SESSION['old_values']['aadhaar']) ? htmlspecialchars($_SESSION['old_values']['aadhaar']) : '' ?>" 
+                                                maxlength="12" placeholder="Enter Aadhaar Number">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="aadhaar_path">Upload Aadhaar Card</label>
+                                            <input type="file" class="form-control-file" id="aadhaar_path" name="aadhaar_path" accept="image/*,application/pdf">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="gstn">GSTN</label>
+                                            <input type="text" class="form-control" id="gstn" name="gstn" 
+                                                value="<?= isset($_SESSION['old_values']['gstn']) ? htmlspecialchars($_SESSION['old_values']['gstn']) : '' ?>" 
+                                                maxlength="15" placeholder="Enter GST Number">
                                         </div>
                                     </div>
                                 </div>
@@ -127,7 +200,11 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                             <select name="district_id" id="district_id" class="form-control">
                                                 <option value="">Choose District</option>
                                                 <?php foreach ($districts as $district): ?>
-                                                <option value="<?= $district['id'] ?>"><?= $district['name'] ?></option>
+                                                    <option value="<?= $district['id'] ?>" 
+                                                        <?= (isset($_SESSION['old_values']['district_id']) 
+                                                            && $_SESSION['old_values']['district_id'] == $district['id']) ? 'selected' : '' ?>>
+                                                        <?= $district['name'] ?>
+                                                    </option>
                                                 <?php endforeach; ?>
                                             </select>
                                         </div>
@@ -148,10 +225,29 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                             </select>
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-12">
                                         <div class="form-group">
                                             <label>Address</label>
                                             <textarea name="address" class="form-control" placeholder="Enter Authority Address"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <h3>Authority User</h3>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>Authority CAFO(Cheif Account Finance Officer)</label>
+                                            <select name="user_id" id="user_id" class="form-control" >
+                                                <option value="">-- Select User --</option>
+                                                <?php foreach ($users as $user): ?>
+                                                    <option value="<?= $user['id'] ?>" 
+                                                        <?= (isset($_SESSION['old_values']['user_id']) 
+                                                            && $_SESSION['old_values']['user_id'] == $user['id']) ? 'selected' : '' ?>>
+                                                        <?= htmlspecialchars($user['name']) ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
                                         </div>
                                     </div>
                                 </div>
@@ -248,6 +344,17 @@ scratch. This page gets rid of all links and provides the needed markup only.
         if (talukaId) {
             const villages = await fetchData('fetch_data.php', `type=villages&id=${talukaId}`);
             populateDropdown(villageSelect, villages, 'Choose Village');
+        }
+    });
+
+    $('#department_id').on('change', function () {
+        const categoryId = $(this).val();
+        if (categoryId) {
+            $.get('get-types.php?department_id=' + categoryId, function (data) {
+            $('#subdepartment_id').html(data);
+            });
+        } else {
+            $('#subdepartment_id').html('<option value="">-- Select Subdepartment --</option>');
         }
     });
 

@@ -27,6 +27,8 @@ $stmt->close();
 // Fetch required dropdown values
 $local_authority_types = $conn->query("SELECT id, name FROM local_authority_types")->fetch_all(MYSQLI_ASSOC);
 $districts = $conn->query("SELECT id, name FROM districts")->fetch_all(MYSQLI_ASSOC);
+$departments = $conn->query("SELECT id, name FROM authority_departments")->fetch_all(MYSQLI_ASSOC);
+$authoritySubdepartments = $conn->query("SELECT id, name FROM authority_subdepartments")->fetch_all(MYSQLI_ASSOC);
 
 // Fetch talukas and villages based on existing selection
 $talukas = [];
@@ -52,7 +54,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
 
-  <title>MBOCWCESS Portal | View Local Authority</title>
+  <title>MBOCWCESS Portal | View Implementing Angency</title>
   <link rel="icon" href="../assets/img/favicon_io/favicon.ico" type="image/x-icon">
 
   <!-- Font Awesome Icons -->
@@ -79,12 +81,12 @@ scratch. This page gets rid of all links and provides the needed markup only.
       <div class="container-fluid">
         <div class="row mb-2">
           <div class="col-sm-6">
-            <h1 class="m-0 text-dark">View Local Authority</h1>
+            <h1 class="m-0 text-dark">View Implementing Agency</h1>
           </div><!-- /.col -->
           <div class="col-sm-6">
             <ol class="breadcrumb float-sm-right">
               <li class="breadcrumb-item"><a href="#">Home</a></li>
-              <li class="breadcrumb-item active">View Local Authority</li>
+              <li class="breadcrumb-item active">View Implementing Agency</li>
             </ol>
           </div><!-- /.col -->
         </div><!-- /.row -->
@@ -97,11 +99,9 @@ scratch. This page gets rid of all links and provides the needed markup only.
         <div class="container-fluid">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">View Authority</h3>
+                    <h3 class="card-title">View Implementing Agency</h3>
                     <div class="card-tools">
-                        <a href="local-authorities.php" class="btn btn-primary" ><i class="fas fa-eye"></i>Local Authority List</a> 
-                        <button type="button" class="btn btn-tool" data-card-widget="collapse" data-toggle="tooltip" title="Collapse"><i class="fas fa-minus"></i></button>
-                        <button type="button" class="btn btn-tool" data-card-widget="remove" data-toggle="tooltip" title="Remove"><i class="fas fa-times"></i></button>
+                        <a href="local-authorities.php" class="btn btn-primary" ><i class="fas fa-eye"></i>Implementing Agency List</a> 
                     </div>
                 </div>
                 <div class="card-body p-4">
@@ -112,17 +112,39 @@ scratch. This page gets rid of all links and provides the needed markup only.
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="name" class="form-label">Authority Name</label>
+                                        <label for="name" class="form-label">Name</label>
                                         <input type="text" class="form-control" id="name" name="name" value="<?php echo htmlspecialchars($row['name'] ?? ''); ?>" readonly>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label>Authority Type</label>
+                                        <label>Type</label>
                                         <select name="type_id" id="type_id" class="form-control" readonly>
-                                            <option value="">-- Select Authority Type --</option>
+                                            <option value="">-- Select Type --</option>
                                             <?php foreach ($local_authority_types as $authority_type): ?>
                                                 <option value="<?= $authority_type['id'] ?>" <?= ($authority_type['id'] == $row['type_id']) ? 'selected' : '' ?>><?= htmlspecialchars($authority_type['name']) ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Department</label>
+                                        <select name="authority_department_id" id="authority_department_id" class="form-control"  readonly>
+                                            <option value="">-- Select Department --</option>
+                                            <?php foreach ($departments as $cat): ?>
+                                                <option value="<?= $cat['id'] ?>" <?= $cat['id']==$row['authority_department_id']?'selected':'' ?>><?= $cat['name'] ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Sub Department</label>
+                                        <select name="authority_subdepartment_id" id="authority_subdepartment_id" class="form-control" readonly>
+                                            <option value="">-- Select Sub Department --</option>
+                                            <?php foreach ($authoritySubdepartments as $subdep): ?>
+                                                <option value="<?= $subdep['id'] ?>" <?= $subdep['id']==$row['authority_subdepartment_id']?'selected':'' ?>><?= $type['name'] ?></option>
                                             <?php endforeach; ?>
                                         </select>
                                     </div>

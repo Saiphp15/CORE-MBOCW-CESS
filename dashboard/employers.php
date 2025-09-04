@@ -129,8 +129,6 @@ scratch. This page gets rid of all links and provides the needed markup only.
                 <h3 class="card-title">Employers</h3>
                 <div class="card-tools">
                     <a href="add-employer.php" class="btn btn-primary" ><i class="fas fa-plus"></i> Add Employer</a> 
-                    <button type="button" class="btn btn-tool" data-card-widget="collapse" data-toggle="tooltip" title="Collapse"><i class="fas fa-minus"></i></button>
-                    <button type="button" class="btn btn-tool" data-card-widget="remove" data-toggle="tooltip" title="Remove"><i class="fas fa-times"></i></button>
                 </div>
             </div>
             <!-- /.card-header -->
@@ -162,7 +160,21 @@ scratch. This page gets rid of all links and provides the needed markup only.
                     <tbody>
                         <?php
                         // Fetch all employers from the database.
-                        $sql = "SELECT * FROM employers ORDER BY id ASC";
+                        $loggedInUserId     = $_SESSION['user_id'];
+                        $loggedInUserRole   = $_SESSION['user_role'];
+                        $sql = "";
+                        if ($loggedInUserId == 1 && $loggedInUserRole == 1) {
+                            // Superadmin: see all
+                            $sql = "SELECT * FROM employers ORDER BY id ASC";
+                        } elseif ($loggedInUserRole == 3) {
+                            // CAFO: see own + engineers under him
+                            $sql = "SELECT * FROM employers WHERE created_by = $loggedInUserId 
+                                    OR created_by IN (SELECT id FROM users WHERE created_by = $loggedInUserId) 
+                                    ORDER BY id ASC";
+                        } elseif ($loggedInUserRole == 7) {
+                            // Engineer: see only his own
+                            $sql = "SELECT * FROM employers WHERE created_by = $loggedInUserId ORDER BY id ASC";
+                        }
                         $result = mysqli_query($conn, $sql);
                         $sr = 1;
                         if (mysqli_num_rows($result) > 0) {
@@ -172,13 +184,13 @@ scratch. This page gets rid of all links and provides the needed markup only.
 
                                 echo "<tr>";
                                 echo "<td>".$sr++."</td>";
-                                echo "<td>".htmlspecialchars($row['employer_type'])."</td>";
-                                echo "<td>".htmlspecialchars($row['name'])."</td>";
-                                echo "<td>".htmlspecialchars($row['email'])."</td>";
-                                echo "<td>".htmlspecialchars($row['phone'])."</td>";
-                                echo "<td>".htmlspecialchars($row['pancard'])."</td>";
-                                echo "<td>".htmlspecialchars($row['aadhaar'])."</td>";
-                                echo "<td>".htmlspecialchars($row['gstn'])."</td>";
+                                echo "<td>".htmlspecialchars($row['employer_type'] ?? '')."</td>";
+                                echo "<td>".htmlspecialchars($row['name'] ?? '')."</td>";
+                                echo "<td>".htmlspecialchars($row['email'] ?? '')."</td>";
+                                echo "<td>".htmlspecialchars($row['phone'] ?? '')."</td>";
+                                echo "<td>".htmlspecialchars($row['pancard'] ?? '')."</td>";
+                                echo "<td>".htmlspecialchars($row['aadhaar'] ?? '')."</td>";
+                                echo "<td>".htmlspecialchars($row['gstn'] ?? '')."</td>";
                                 echo "<td>
                                         <label class='switch' title='$statusText'><input type='checkbox' data-id='{$row['id']}' id='activeToggle' onclick='return confirm(\"Are you sure you want to perform this action?\");' {$isActive}><span class='slider round'></span></label>
                                         <a href='edit-employer.php?id=".$row['id']."' class='btn btn-sm btn-primary'><i class='fas fa-edit'></i></a>

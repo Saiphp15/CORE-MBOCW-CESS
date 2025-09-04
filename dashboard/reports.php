@@ -20,23 +20,75 @@ if ($conn->connect_error) {
 
 try {
     // --- 1. Project-wise CESS Report Query ---
-    $sqlProjectReports = "
-        SELECT 
-            p.id,
-            p.project_name,
-            (select SUM(pwo.work_order_effective_cess_amount) from project_work_orders pwo where pwo.project_id=p.id) AS total_cess,
-            COALESCE(SUM(CASE WHEN cph.is_payment_verified = 1 AND LOWER(cph.payment_status) = 'Paid' THEN cph.effective_cess_amount ELSE 0 END), 0) AS collected_cess
-        FROM 
-            projects p
-        LEFT JOIN 
-            project_work_orders pwo ON p.id = pwo.project_id
-        LEFT JOIN
-            cess_payment_history cph ON pwo.id = cph.workorder_id
-        GROUP BY 
-            p.id, p.project_name
-        ORDER BY
-            p.project_name;
-    ";
+    $loggedInUserId     = $_SESSION['user_id'];
+    $loggedInUserRole   = $_SESSION['user_role'];
+    $sqlProjectReports = "";
+    if ($loggedInUserId == 1 && $loggedInUserRole == 1) {
+        // Superadmin: see all
+        $sqlProjectReports = "
+            SELECT 
+                p.id,
+                p.project_name,
+                (select SUM(pwo.work_order_effective_cess_amount) from project_work_orders pwo where pwo.project_id=p.id) AS total_cess,
+                COALESCE(SUM(CASE WHEN cph.is_payment_verified = 1 AND LOWER(cph.payment_status) = 'Paid' THEN cph.effective_cess_amount ELSE 0 END), 0) AS collected_cess
+            FROM 
+                projects p
+            LEFT JOIN 
+                project_work_orders pwo ON p.id = pwo.project_id
+            LEFT JOIN
+                cess_payment_history cph ON pwo.id = cph.workorder_id
+            GROUP BY 
+                p.id, p.project_name
+            ORDER BY
+                p.project_name;
+        ";
+    } elseif ($loggedInUserRole == 3) {
+        // CAFO: see own + engineers under him
+        $sqlProjectReports = "
+            SELECT 
+                p.id,
+                p.project_name,
+                (select SUM(pwo.work_order_effective_cess_amount) from project_work_orders pwo where pwo.project_id=p.id) AS total_cess,
+                COALESCE(SUM(CASE WHEN cph.is_payment_verified = 1 AND LOWER(cph.payment_status) = 'Paid' THEN cph.effective_cess_amount ELSE 0 END), 0) AS collected_cess
+            FROM 
+                projects p
+            LEFT JOIN 
+                project_work_orders pwo ON p.id = pwo.project_id
+            LEFT JOIN
+                cess_payment_history cph ON pwo.id = cph.workorder_id
+            WHERE 
+                p.created_by = $loggedInUserId 
+                OR p.created_by IN (
+                    SELECT id FROM users WHERE created_by = $loggedInUserId
+                )
+            GROUP BY 
+                p.id, p.project_name
+            ORDER BY
+                p.project_name;
+        ";
+    } elseif ($loggedInUserRole == 7) {
+        // Engineer: see only his own
+        $sqlProjectReports = "
+            SELECT 
+                p.id,
+                p.project_name,
+                (select SUM(pwo.work_order_effective_cess_amount) from project_work_orders pwo where pwo.project_id=p.id) AS total_cess,
+                COALESCE(SUM(CASE WHEN cph.is_payment_verified = 1 AND LOWER(cph.payment_status) = 'Paid' THEN cph.effective_cess_amount ELSE 0 END), 0) AS collected_cess
+            FROM 
+                projects p
+            LEFT JOIN 
+                project_work_orders pwo ON p.id = pwo.project_id
+            LEFT JOIN
+                cess_payment_history cph ON pwo.id = cph.workorder_id
+            WHERE 
+                p.created_by = $loggedInUserId
+            GROUP BY 
+                p.id, p.project_name
+            ORDER BY
+                p.project_name;
+        ";
+    }
+    
     $resultProjectReports = $conn->query($sqlProjectReports);
     if ($resultProjectReports && $resultProjectReports->num_rows > 0) {
         while ($row = $resultProjectReports->fetch_assoc()) {
@@ -46,21 +98,72 @@ try {
     }
 
     // --- 2. Work Order-wise CESS Report Query ---
-    $sqlWorkOrderReports = "
-        SELECT 
-            pwo.id AS work_order_id,
-            pwo.work_order_number,
-            pwo.work_order_effective_cess_amount AS total_cess,
-            COALESCE(SUM(CASE WHEN cph.is_payment_verified = 1 AND LOWER(cph.payment_status) = 'Paid' THEN cph.effective_cess_amount ELSE 0 END), 0) AS collected_cess
-        FROM 
-            project_work_orders pwo
-        LEFT JOIN
-            cess_payment_history cph ON pwo.id = cph.workorder_id
-        GROUP BY 
-            pwo.id, pwo.work_order_number, pwo.work_order_effective_cess_amount
-        ORDER BY
-            pwo.work_order_number;
-    ";
+    $loggedInUserId     = $_SESSION['user_id'];
+    $loggedInUserRole   = $_SESSION['user_role'];
+    $sqlWorkOrderReports = "";
+    if ($loggedInUserId == 1 && $loggedInUserRole == 1) {
+        // Superadmin: see all
+        $sqlWorkOrderReports = "
+            SELECT 
+                pwo.id AS work_order_id,
+                pwo.work_order_number,
+                pwo.work_order_effective_cess_amount AS total_cess,
+                COALESCE(SUM(CASE WHEN cph.is_payment_verified = 1 AND LOWER(cph.payment_status) = 'Paid' THEN cph.effective_cess_amount ELSE 0 END), 0) AS collected_cess
+            FROM 
+                project_work_orders pwo
+            LEFT JOIN
+                cess_payment_history cph ON pwo.id = cph.workorder_id
+            GROUP BY 
+                pwo.id, pwo.work_order_number, pwo.work_order_effective_cess_amount
+            ORDER BY
+                pwo.work_order_number;
+        ";
+    } elseif ($loggedInUserRole == 3) {
+        // CAFO: see own + engineers under him
+        $sqlWorkOrderReports = "
+            SELECT 
+                pwo.id AS work_order_id,
+                pwo.work_order_number,
+                pwo.work_order_effective_cess_amount AS total_cess,
+                COALESCE(SUM(CASE WHEN cph.is_payment_verified = 1 AND LOWER(cph.payment_status) = 'Paid' THEN cph.effective_cess_amount ELSE 0 END), 0) AS collected_cess
+            FROM 
+                project_work_orders pwo
+            LEFT JOIN
+                projects p ON pwo.project_id = p.id
+            LEFT JOIN
+                cess_payment_history cph ON pwo.id = cph.workorder_id
+            WHERE 
+                p.created_by = $loggedInUserId 
+                OR p.created_by IN (
+                    SELECT id FROM users WHERE created_by = $loggedInUserId
+                )
+            GROUP BY 
+                pwo.id, pwo.work_order_number, pwo.work_order_effective_cess_amount
+            ORDER BY
+                pwo.work_order_number;
+        ";
+    } elseif ($loggedInUserRole == 7) {
+        // Engineer: see only his own
+        $sqlWorkOrderReports = "
+            SELECT 
+                pwo.id AS work_order_id,
+                pwo.work_order_number,
+                pwo.work_order_effective_cess_amount AS total_cess,
+                COALESCE(SUM(CASE WHEN cph.is_payment_verified = 1 AND LOWER(cph.payment_status) = 'Paid' THEN cph.effective_cess_amount ELSE 0 END), 0) AS collected_cess
+            FROM 
+                project_work_orders pwo
+            LEFT JOIN
+                projects p ON pwo.project_id = p.id
+            LEFT JOIN
+                cess_payment_history cph ON pwo.id = cph.workorder_id
+            WHERE 
+                p.created_by = $loggedInUserId
+            GROUP BY 
+                pwo.id, pwo.work_order_number, pwo.work_order_effective_cess_amount
+            ORDER BY
+                pwo.work_order_number;
+        ";
+    }
     $resultWorkOrderReports = $conn->query($sqlWorkOrderReports);
     if ($resultWorkOrderReports && $resultWorkOrderReports->num_rows > 0) {
         while ($row = $resultWorkOrderReports->fetch_assoc()) {
@@ -70,7 +173,27 @@ try {
     }
 
     // --- 3. Project Status & CESS Collection Cards Data ---
-    $sqlProjectStatus = "SELECT id, project_name FROM projects ORDER BY project_name;";
+    $loggedInUserId     = $_SESSION['user_id'];
+    $loggedInUserRole   = $_SESSION['user_role'];
+    $sqlProjectStatus = "";
+    if ($loggedInUserId == 1 && $loggedInUserRole == 1) {
+        // Superadmin: see all
+        $sqlProjectStatus = "SELECT id, project_name FROM projects ORDER BY project_name;";
+    } elseif ($loggedInUserRole == 3) {
+        // CAFO: see own + engineers under him
+        $sqlProjectStatus = "
+            SELECT id, project_name 
+            FROM projects 
+            WHERE created_by = $loggedInUserId 
+                OR created_by IN (
+                    SELECT id FROM users WHERE created_by = $loggedInUserId
+                )
+            ORDER BY project_name;
+        ";
+    } elseif ($loggedInUserRole == 7) {
+        // Engineer: see only his own
+        $sqlProjectStatus = "SELECT id, project_name FROM projects WHERE created_by = $loggedInUserId ORDER BY project_name;";
+    }
     $resultProjectStatus = $conn->query($sqlProjectStatus);
     if ($resultProjectStatus && $resultProjectStatus->num_rows > 0) {
         while ($project = $resultProjectStatus->fetch_assoc()) {
@@ -90,6 +213,8 @@ try {
             $stmt->close();
 
             // Get CESS amounts for CESS collection progress
+            $loggedInUserId     = $_SESSION['user_id'];
+            $loggedInUserRole   = $_SESSION['user_role'];
             $sqlCessAmounts = "
                 SELECT 
                     pwo.id,
@@ -102,6 +227,7 @@ try {
                 GROUP BY 
                     pwo.id, pwo.work_order_number, pwo.work_order_effective_cess_amount
             ";
+            
             $stmt = $conn->prepare($sqlCessAmounts);
             $stmt->bind_param("i", $projectId);
             $stmt->execute();
@@ -204,74 +330,79 @@ try {
     <div class="content">
       <div class="container-fluid">
 
-        <!-- Project-wise CESS Report -->
-        <div class="card card-primary">
-          <div class="card-header">
-            <h3 class="card-title">Project-wise CESS Report</h3>
-          </div>
-          <div class="card-body">
-            <?php if (count($projectReports) > 0): ?>
-            <table id="projectReportsTable" class="table table-bordered table-striped">
-              <thead>
-                <tr>
-                  <th>Project Name</th>
-                  <th>Total CESS Due (₹)</th>
-                  <th>CESS Collected (₹)</th>
-                  <th>CESS Pending (₹)</th>
-                </tr>
-              </thead>
-              <tbody>
-                <?php foreach ($projectReports as $report): ?>
-                <tr>
-                  <td><?php echo htmlspecialchars($report['project_name']); ?></td>
-                  <td><?php echo number_format($report['total_cess'], 2); ?></td>
-                  <td><?php echo number_format($report['collected_cess'], 2); ?></td>
-                  <td><?php echo number_format($report['pending_cess'], 2); ?></td>
-                </tr>
-                <?php endforeach; ?>
-              </tbody>
-            </table>
-            <?php else: ?>
-            <p>No project data found. Please ensure you have projects and work orders in your database.</p>
-            <?php endif; ?>
-          </div>
+        <div class="row">
+            <div class="col-md-6">
+                <!-- Project-wise CESS Report -->
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">Project-wise CESS Report</h3>
+                    </div>
+                    <div class="card-body">
+                        <?php if (count($projectReports) > 0): ?>
+                        <table id="projectReportsTable" class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                            <th>Project Name</th>
+                            <th>Total CESS Due (₹)</th>
+                            <th>CESS Collected (₹)</th>
+                            <th>CESS Pending (₹)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($projectReports as $report): ?>
+                            <tr>
+                            <td><?php echo htmlspecialchars($report['project_name']); ?></td>
+                            <td><?php echo number_format($report['total_cess'], 2); ?></td>
+                            <td><?php echo number_format($report['collected_cess'], 2); ?></td>
+                            <td><?php echo number_format($report['pending_cess'], 2); ?></td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                        </table>
+                        <?php else: ?>
+                        <p>No project data found. Please ensure you have projects and work orders in your database.</p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <!-- /.card -->
+            </div>
+            <div class="col-md-6">
+                <!-- Work Order-wise CESS Report -->
+                <div class="card card-info">
+                    <div class="card-header">
+                        <h3 class="card-title">Work Order-wise CESS Report</h3>
+                    </div>
+                    <div class="card-body">
+                        <?php if (count($workOrderReports) > 0): ?>
+                        <table id="workOrderReportsTable" class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                            <th>Work Order #</th>
+                            <th>Total CESS Due (₹)</th>
+                            <th>CESS Collected (₹)</th>
+                            <th>CESS Pending (₹)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($workOrderReports as $report): ?>
+                            <tr>
+                            <td><?php echo htmlspecialchars($report['work_order_number']); ?></td>
+                            <td><?php echo number_format($report['total_cess'], 2); ?></td>
+                            <td><?php echo number_format($report['collected_cess'], 2); ?></td>
+                            <td><?php echo number_format($report['pending_cess'], 2); ?></td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                        </table>
+                        <?php else: ?>
+                        <p>No work order data found. Please ensure you have work orders in your database.</p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <!-- /.card -->
+            </div>
         </div>
-        <!-- /.card -->
-
-        <!-- Work Order-wise CESS Report -->
-        <div class="card card-info">
-          <div class="card-header">
-            <h3 class="card-title">Work Order-wise CESS Report</h3>
-          </div>
-          <div class="card-body">
-            <?php if (count($workOrderReports) > 0): ?>
-            <table id="workOrderReportsTable" class="table table-bordered table-striped">
-              <thead>
-                <tr>
-                  <th>Work Order #</th>
-                  <th>Total CESS Due (₹)</th>
-                  <th>CESS Collected (₹)</th>
-                  <th>CESS Pending (₹)</th>
-                </tr>
-              </thead>
-              <tbody>
-                <?php foreach ($workOrderReports as $report): ?>
-                <tr>
-                  <td><?php echo htmlspecialchars($report['work_order_number']); ?></td>
-                  <td><?php echo number_format($report['total_cess'], 2); ?></td>
-                  <td><?php echo number_format($report['collected_cess'], 2); ?></td>
-                  <td><?php echo number_format($report['pending_cess'], 2); ?></td>
-                </tr>
-                <?php endforeach; ?>
-              </tbody>
-            </table>
-            <?php else: ?>
-            <p>No work order data found. Please ensure you have work orders in your database.</p>
-            <?php endif; ?>
-          </div>
-        </div>
-        <!-- /.card -->
-
+        
         <!-- Project Status Cards -->
         <div class="card card-info">
           <div class="card-header">

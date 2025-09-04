@@ -7,12 +7,9 @@ if (!isset($_SESSION['user_id'])) {
 require_once '../config/db.php';
 
 // Fetch required dropdown values
-$categories = $conn->query("SELECT id, name FROM project_categories")->fetch_all(MYSQLI_ASSOC);
-$local_authorities = $conn->query("SELECT id, name FROM local_authorities")->fetch_all(MYSQLI_ASSOC);
 $users = $conn->query("SELECT id, name FROM users")->fetch_all(MYSQLI_ASSOC);
 $employers = $conn->query("SELECT id, name FROM employers")->fetch_all(MYSQLI_ASSOC);
 $districts = $conn->query("SELECT id, name FROM districts")->fetch_all(MYSQLI_ASSOC);
-
 ?>
 <!DOCTYPE html>
 <!--
@@ -73,8 +70,6 @@ scratch. This page gets rid of all links and provides the needed markup only.
                     <h3 class="card-title">Add Project</h3>
                     <div class="card-tools">
                         <a href="projects.php" class="btn btn-primary" ><i class="fas fa-eye"></i> Project List</a> 
-                        <button type="button" class="btn btn-tool" data-card-widget="collapse" data-toggle="tooltip" title="Collapse"><i class="fas fa-minus"></i></button>
-                        <button type="button" class="btn btn-tool" data-card-widget="remove" data-toggle="tooltip" title="Remove"><i class="fas fa-times"></i></button>
                     </div>
                 </div>
                 <div class="card-body p-4">
@@ -96,55 +91,25 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>Project Name</label>
-                                            <input type="text" name="project_name" class="form-control" required>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label>Project Category</label>
-                                            <select name="category_id" id="category_id" class="form-control" required>
-                                                <option value="">-- Select Category --</option>
-                                                <?php foreach ($categories as $cat): ?>
-                                                <option value="<?= $cat['id'] ?>"><?= $cat['name'] ?></option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label>Project Type</label>
-                                            <select name="type_id" id="type_id" class="form-control" required>
-                                                <option value="">-- Select Type --</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label>Local Authority</label>
-                                            <select name="local_authority_id" class="form-control" required>
-                                                <option value="">-- Select Local Authority --</option>
-                                                <?php foreach ($local_authorities as $la): ?>
-                                                <option value="<?= $la['id'] ?>"><?= $la['name'] ?></option>
-                                                <?php endforeach; ?>
-                                            </select>
+                                            <input type="text" name="project_name" class="form-control" >
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>Construction Cost (₹)</label>
-                                            <input type="number" name="construction_cost" id="construction_cost" class="form-control" required>
+                                            <input type="number" name="construction_cost" id="construction_cost" class="form-control" >
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>Project Start Date</label>
-                                            <input type="date" name="project_start_date" class="form-control" required>
+                                            <input type="date" name="project_start_date" class="form-control" >
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>Project End Date</label>
-                                            <input type="date" name="project_end_date" class="form-control" required>
+                                            <input type="date" name="project_end_date" class="form-control" >
                                         </div>
                                     </div>
                                     <div class="col-md-6">
@@ -196,13 +161,13 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>Pin Code</label>
-                                            <input type="number" name="pin_code" class="form-control" required>
+                                            <input type="number" name="pin_code" class="form-control" maxlength="6" >
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>Project Address</label>
-                                            <input type="text" name="project_address" class="form-control" required>
+                                            <input type="text" name="project_address" class="form-control" >
                                         </div>
                                     </div>
                                 </div>
@@ -222,7 +187,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                             </div>
                                             <div class="col-md-6">
                                                 <label>Work Order Amount</label>
-                                                <input type="text" name="work_order_amount[]" class="form-control" placeholder="Total value of work order">
+                                                <input type="text" name="work_order_amount[]" class="form-control workorder_amount" placeholder="Total value of work order">
                                                 <input type="hidden" name="work_order_cess_amount" value="">
                                             </div>
                                             <div class="col-md-6">
@@ -387,22 +352,40 @@ scratch. This page gets rid of all links and provides the needed markup only.
         }
     }
 
+    function getTotalWorkOrderAmount() {
+        let total = 0;
+        document.querySelectorAll('.workorder_amount').forEach(input => {
+            total += parseFloat(input.value) || 0;
+        });
+        return total;
+    }
+
+    // Restrict while typing (live validation)
+    document.addEventListener("input", function (e) {
+        if (e.target.classList.contains("workorder_amount")) {
+            const constructionCost = parseFloat(document.getElementById('construction_cost').value) || 0;
+            const total = getTotalWorkOrderAmount();
+
+            if (total > constructionCost) {
+            alert("Total workorder amount cannot exceed construction cost!");
+            e.target.value = "";
+            }
+        }
+    });
+
     // Add an event listener to the construction cost input field.
     // The 'input' event fires whenever the value of the element changes.
     constructionCostInput.addEventListener('input', calculateCess);
 
-    $('#category_id').on('change', function () {
-    const categoryId = $(this).val();
-    if (categoryId) {
-        $.get('get-types.php?category_id=' + categoryId, function (data) {
-        $('#type_id').html(data);
-        });
-    } else {
-        $('#type_id').html('<option value="">-- Select Type --</option>');
-    }
-    });
-
     document.getElementById('addMoreBtn').addEventListener('click', function () {
+
+        const constructionCost = parseFloat(document.getElementById('construction_cost').value) || 0;
+        const total = getTotalWorkOrderAmount();
+        if (total >= constructionCost) {
+            alert("Cannot add more work orders. Construction cost limit reached!");
+            return;
+        }
+
         const container = document.getElementById('workOrderContainer');
         const sections = container.getElementsByClassName('work-order-section');
         const lastSection = sections[sections.length - 1];
@@ -431,7 +414,38 @@ scratch. This page gets rid of all links and provides the needed markup only.
             }
         }
     });
-</script>
+    
 
+    // Get references to date inputs
+    const startDateInput = document.querySelector('input[name="project_start_date"]');
+    const endDateInput = document.querySelector('input[name="project_end_date"]');
+    const form = document.querySelector('form');
+
+    // Function to validate dates
+    function validateProjectDates() {
+        const startDate = new Date(startDateInput.value);
+        const endDate = new Date(endDateInput.value);
+
+        if (startDateInput.value && endDateInput.value) {
+            if (endDate < startDate) {
+                alert("❌ Project End Date cannot be earlier than Start Date.");
+                endDateInput.value = ""; // reset invalid value
+                endDateInput.focus();
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // Trigger validation when end date changes
+    endDateInput.addEventListener('change', validateProjectDates);
+
+    // Also validate on form submit
+    form.addEventListener('submit', function (e) {
+        if (!validateProjectDates()) {
+            e.preventDefault(); // stop form submission
+        }
+    });
+</script>
 </body>
 </html>

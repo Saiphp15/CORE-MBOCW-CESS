@@ -66,8 +66,6 @@ scratch. This page gets rid of all links and provides the needed markup only.
                     <div class="card-tools">
                         <a href="../assets/projects-invoice-cess-template/projects-invoices-cess-template.xlsx" class="btn btn-info" download><i class="fas fa-download"></i> Download Sample Template</a> 
                         <a href="bulk-invoices-history.php" class="btn btn-primary" ><i class="fas fa-eye"></i> Bulk Invoice Upload History List</a> 
-                        <button type="button" class="btn btn-tool" data-card-widget="collapse" data-toggle="tooltip" title="Collapse"><i class="fas fa-minus"></i></button>
-                        <button type="button" class="btn btn-tool" data-card-widget="remove" data-toggle="tooltip" title="Remove"><i class="fas fa-times"></i></button>
                     </div>
                 </div>
                 <div class="card-body p-4">
@@ -89,7 +87,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                     
                                     <div class="col-md-6">
                                         <div class="form-group">
-                                            <label>Effective Cess Amount</label>
+                                            <label>Effective Cess Amount</label> (<i>It Could be vary while upload validation process</i>)
                                             <input type="number" name="effective_cess_amount" id="effective_cess_amount" placeholder="Effective Cess Amount" class="form-control" readonly>
                                         </div>
                                     </div>
@@ -104,7 +102,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
 
                                 <br/><br/>
                                 <button type="submit" class="btn btn-success">Submit</button>
-                                <a href="projects.php" class="btn btn-default ml-2">Cancel</a>
+                                <a href="bulk-invoices-history.php" class="btn btn-default ml-2">Cancel</a>
                                       
                             </form>
                         </div>
@@ -160,8 +158,8 @@ scratch. This page gets rid of all links and provides the needed markup only.
         // Convert the worksheet to a JSON array of objects
         const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-        // The Effective Cess Amount is at index 15 (0-indexed)
-        const effectiveCessAmountColumnIndex = 15;
+        // The Effective Cess Amount is at index 11 (0-indexed)
+        const effectiveCessAmountColumnIndex = 11;
 
         let totalEffectiveCessAmount = 0;
 

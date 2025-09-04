@@ -92,9 +92,9 @@ scratch. This page gets rid of all links and provides the needed markup only.
             <div class="card-header">
                 <h3 class="card-title">Bulk Invoice Upload History List</h3>
                 <div class="card-tools">
+                    <?php if(in_array($_SESSION['user_role'],[3,7])){ ?>
                     <a href="bulk-projects-invoice-cess-upload-form.php" class="btn btn-info" ><i class="fas fa-plus"></i> Bulk Projects Upload</a>
-                    <button type="button" class="btn btn-tool" data-card-widget="collapse" data-toggle="tooltip" title="Collapse"><i class="fas fa-minus"></i></button>
-                    <button type="button" class="btn btn-tool" data-card-widget="remove" data-toggle="tooltip" title="Remove"><i class="fas fa-times"></i></button>
+                    <?php } ?>
                 </div>
             </div>
             <!-- /.card-header -->
@@ -118,22 +118,65 @@ scratch. This page gets rid of all links and provides the needed markup only.
                             <th>Payment Mode</th>
                             <th>Invoice</th>
                             <th>Uploaded On</th>
-                            <th>Payment Status</th>
+                            <th>Created By</th>
+                            <th>Payment Verified Status</th>
                             <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php
-                        $sql = "SELECT 
+                        $loggedInUserId     = $_SESSION['user_id'];
+                        $loggedInUserRole   = $_SESSION['user_role'];
+                        $sql = "";
+                        if ($loggedInUserId == 1 && $loggedInUserRole == 1) {
+                            // Superadmin: see all
+                            $sql = "SELECT 
                                         bpih.id,
                                         bpih.effective_cess_amount,
                                         bpih.bulk_project_invoices_template_file,
                                         bpih.cess_payment_mode,
                                         bpih.is_payment_verified,
                                         bpih.rejection_reason,
-                                        bpih.created_at
+                                        bpih.created_at,
+                                        u.name AS created_by
                                     FROM bulk_projects_invoices_history AS bpih
+                                    LEFT JOIN users u ON bpih.created_by = u.id
                                     ORDER BY bpih.created_at DESC";
+                        } elseif ($loggedInUserRole == 3) {
+                            // CAFO: see own + engineers under him
+                            $sql = "SELECT 
+                                        bpih.id,
+                                        bpih.effective_cess_amount,
+                                        bpih.bulk_project_invoices_template_file,
+                                        bpih.cess_payment_mode,
+                                        bpih.is_payment_verified,
+                                        bpih.rejection_reason,
+                                        bpih.created_at,
+                                        u.name AS created_by
+                                    FROM bulk_projects_invoices_history AS bpih 
+                                    LEFT JOIN users u ON bpih.created_by = u.id 
+                                    WHERE bpih.created_by = $loggedInUserId 
+                                    OR bpih.created_by IN (
+                                        SELECT id FROM users WHERE created_by = $loggedInUserId
+                                    )
+                                    ORDER BY bpih.created_at DESC";
+                        } elseif ($loggedInUserRole == 7) {
+                            // Engineer: see only his own
+                            $sql = "SELECT 
+                                        bpih.id,
+                                        bpih.effective_cess_amount,
+                                        bpih.bulk_project_invoices_template_file,
+                                        bpih.cess_payment_mode,
+                                        bpih.is_payment_verified,
+                                        bpih.rejection_reason,
+                                        bpih.created_at,
+                                        u.name AS created_by
+                                    FROM bulk_projects_invoices_history AS bpih
+                                    LEFT JOIN users u ON bpih.created_by = u.id 
+                                    WHERE bpih.created_by = $loggedInUserId
+                                    ORDER BY bpih.created_at DESC";
+                        }
+
                         $result = mysqli_query($conn, $sql);
                         $sr = 1;
                         if (mysqli_num_rows($result) > 0) {
@@ -143,8 +186,14 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                 echo "<td>₹" . htmlspecialchars(number_format($row['effective_cess_amount'], 2)) . "</td>";
                                 echo "<td>" . htmlspecialchars($row['bulk_project_invoices_template_file']) . " <a href='../uploads/bulk_upload_templates/". htmlspecialchars($row['bulk_project_invoices_template_file']) ."' download><i class='fas fa-download'></i></a></td>";
                                 echo "<td>" . htmlspecialchars(getPaymentModeName($row['cess_payment_mode'])) . "</td>";
-                                echo "<td><a href='generate-invoice.php?id=" . $row['id'] . "' class='btn btn-sm btn-primary'><i class='fas fa-file-invoice'></i> Generate/View Invoice</a></td>";
+                                if (in_array($row['is_payment_verified'], ['2', '3'])) {
+                                    //disable invoice generation link for pending and rejected payments
+                                    echo "<td><a href='#' class='btn btn-sm btn-secondary disabled'><i class='fas fa-file-invoice'></i> Generate/View Invoice</a></td>";
+                                } else {
+                                    echo "<td><a href='generate-invoice.php?id=" . $row['id'] . "' target='_blank' class='btn btn-sm btn-primary'><i class='fas fa-file-invoice'></i> Generate/View Invoice</a></td>";
+                                }
                                 echo "<td>" . htmlspecialchars(date("Y-m-d", strtotime($row['created_at']))) . "</td>";
+                                echo "<td>" . htmlspecialchars($row['created_by'] ?? 'Unknown') . "</td>";
                                 
                                 // Display status with a badge
                                 if ($row['is_payment_verified'] == 3) {
@@ -159,10 +208,12 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                 echo "<td class='actions'>";
                                 echo "<a href='view-bulk-invoice.php?id=" . $row['id'] . "' class='btn btn-sm btn-info'><i class='fas fa-eye'></i></a>";
                                 
-                                // Only show action buttons if status is 'Pending'
-                                if ($row['is_payment_verified'] == 2) {
-                                    echo " <button class='btn btn-sm btn-success verify-btn' data-id='{$row['id']}'><i class='fas fa-check'></i> Verify</button>";
-                                    echo " <button class='btn btn-sm btn-danger reject-btn' data-id='{$row['id']}' data-toggle='modal' data-target='#rejectModal'><i class='fas fa-times'></i> Reject</button>";
+                                if($_SESSION['user_role'] === 3) {
+                                    // Only show action buttons if status is 'Pending'
+                                    if ($row['is_payment_verified'] == 2) {
+                                        echo " <button class='btn btn-sm btn-success verify-btn' data-id='{$row['id']}'><i class='fas fa-check'></i> Verify</button>";
+                                        echo " <button class='btn btn-sm btn-danger reject-btn' data-id='{$row['id']}' data-toggle='modal' data-target='#rejectModal'><i class='fas fa-times'></i> Reject</button>";
+                                    }
                                 }
 
                                 echo "</td>";

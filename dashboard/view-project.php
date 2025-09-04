@@ -30,12 +30,12 @@ if (!$project) {
 // Fetch names for dropdown values for display with null checks
 $category_name = 'N/A';
 if (!empty($project['project_category_id'])) {
-    $category_name = $conn->query("SELECT name FROM project_categories WHERE id = " . $project['project_category_id'])->fetch_assoc()['name'] ?? 'N/A';
+    $category_name = $conn->query("SELECT name FROM authority_departments WHERE id = " . $project['project_category_id'])->fetch_assoc()['name'] ?? 'N/A';
 }
 
 $project_type_name = 'N/A';
 if (!empty($project['project_type_id'])) {
-    $project_type_name = $conn->query("SELECT name FROM project_types WHERE id = " . $project['project_type_id'])->fetch_assoc()['name'] ?? 'N/A';
+    $project_type_name = $conn->query("SELECT name FROM authority_subdepartments WHERE id = " . $project['project_type_id'])->fetch_assoc()['name'] ?? 'N/A';
 }
 
 $local_authority_name = 'N/A';

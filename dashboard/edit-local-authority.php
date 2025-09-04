@@ -6,290 +6,252 @@ if (!isset($_SESSION['user_id'])) {
 }
 require_once '../config/db.php';
 
-// Check if ID provided
-if (!isset($_GET['id']) || empty($_GET['id'])) {
-    die("Invalid Request");
+// --- Get ID from query string ---
+if (!isset($_GET['id']) || !ctype_digit($_GET['id'])) {
+    $_SESSION['error'] = "Invalid authority ID.";
+    header("Location: local-authorities.php");
+    exit;
 }
-$id = intval($_GET['id']);
+$authority_id = (int) $_GET['id'];
 
-// Fetch existing record
-$stmt = $conn->prepare("SELECT * FROM local_authorities WHERE id = ?");
-$stmt->bind_param("i", $id);
+// --- Fetch current authority record ---
+$stmt = $conn->prepare("
+  SELECT la.*, lau.user_id 
+  FROM local_authorities AS la 
+  LEFT JOIN local_authorities_users AS lau 
+    ON la.id = lau.local_authority_id 
+  WHERE la.id = ?
+");
+$stmt->bind_param("i", $authority_id);
 $stmt->execute();
 $result = $stmt->get_result();
-
-if ($result->num_rows === 0) {
-    die("Record not found");
-}
-$row = $result->fetch_assoc();
+$authority = $result->fetch_assoc();
 $stmt->close();
 
-// Fetch required dropdown values
-$local_authority_types = $conn->query("SELECT id, name FROM local_authority_types")->fetch_all(MYSQLI_ASSOC);
-$districts = $conn->query("SELECT id, name FROM districts")->fetch_all(MYSQLI_ASSOC);
+if (!$authority) {
+    $_SESSION['error'] = "Authority not found.";
+    header("Location: local-authorities.php");
+    exit;
+}
 
-// Fetch talukas and villages based on existing selection
-$talukas = [];
-$villages = [];
-if( $row['district_id'] ) {
-    $district_id = isset($row['district_id']) ? $row['district_id'] : 0;
-    $talukas = $conn->query("SELECT id, name FROM talukas WHERE district_id=$district_id")->fetch_all(MYSQLI_ASSOC);
-}
-if( $row['taluka_id'] ) {
-    $taluka_id = isset($row['taluka_id']) ? $row['taluka_id'] : 0;
-    $villages = $conn->query("SELECT id, name FROM villages WHERE taluka_id=$taluka_id")->fetch_all(MYSQLI_ASSOC);
-}
-$village_id = isset($row['village_id']) ? $row['village_id'] : 0;
+// --- Dropdown data ---
+$local_authority_types = $conn->query("SELECT id, name FROM local_authority_types")->fetch_all(MYSQLI_ASSOC);
+$authority_departments = $conn->query("SELECT id, name FROM authority_departments")->fetch_all(MYSQLI_ASSOC);
+$local_authority_subdepartments = $conn->query("SELECT id, name FROM authority_subdepartments")->fetch_all(MYSQLI_ASSOC);
+$districts = $conn->query("SELECT id, name FROM districts")->fetch_all(MYSQLI_ASSOC);
+$users = $conn->query("SELECT id, name FROM users WHERE role=3 AND is_active != 3")->fetch_all(MYSQLI_ASSOC);
+$talukas = $conn->query("SELECT id, name FROM talukas WHERE district_id = " . (int)$authority['district_id'])->fetch_all(MYSQLI_ASSOC);
+$villages = $conn->query("SELECT id, name FROM villages WHERE taluka_id = " . (int)$authority['taluka_id'])->fetch_all(MYSQLI_ASSOC);
 ?>
 <!DOCTYPE html>
-<!--
-This is a starter template page. Use this page to start your new project from
-scratch. This page gets rid of all links and provides the needed markup only.
--->
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
-
   <title>MBOCWCESS Portal | Edit Local Authority</title>
   <link rel="icon" href="../assets/img/favicon_io/favicon.ico" type="image/x-icon">
-
-  <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="../plugins/fontawesome-free/css/all.min.css">
-  <!-- Theme style -->
   <link rel="stylesheet" href="../dist/css/adminlte.min.css">
-  <!-- Google Font: Source Sans Pro -->
   <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet">
 </head>
 <body class="hold-transition sidebar-mini">
 <div class="wrapper">
 
-  <!-- Navbar -->
   <?php include('includes/navbar.php'); ?>
-  <!-- /.navbar -->
-
-  <!-- Main Sidebar Container -->
   <?php include('includes/sidebar.php'); ?>
 
-  <!-- Content Wrapper. Contains page content -->
   <div class="content-wrapper">
-    <!-- Content Header (Page header) -->
     <div class="content-header">
       <div class="container-fluid">
         <div class="row mb-2">
-          <div class="col-sm-6">
-            <h1 class="m-0 text-dark">Edit Local Authority</h1>
-          </div><!-- /.col -->
+          <div class="col-sm-6"><h1 class="m-0 text-dark">Edit Local Authority</h1></div>
           <div class="col-sm-6">
             <ol class="breadcrumb float-sm-right">
-              <li class="breadcrumb-item"><a href="#">Home</a></li>
+              <li class="breadcrumb-item"><a href="local-authorities.php">Home</a></li>
               <li class="breadcrumb-item active">Edit Local Authority</li>
             </ol>
-          </div><!-- /.col -->
-        </div><!-- /.row -->
-      </div><!-- /.container-fluid -->
+          </div>
+        </div>
+      </div>
     </div>
-    <!-- /.content-header -->
 
-    <!-- Main content -->
     <div class="content">
-        <div class="container-fluid">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Edit Authority</h3>
-                    <div class="card-tools">
-                        <a href="local-authorities.php" class="btn btn-primary" ><i class="fas fa-eye"></i>Local Authority List</a> 
-                        <button type="button" class="btn btn-tool" data-card-widget="collapse" data-toggle="tooltip" title="Collapse"><i class="fas fa-minus"></i></button>
-                        <button type="button" class="btn btn-tool" data-card-widget="remove" data-toggle="tooltip" title="Remove"><i class="fas fa-times"></i></button>
-                    </div>
-                </div>
-                <div class="card-body p-4">
-                    <div class="row">
-                        <div class="col-md-12 ">
-                            <?php
-                                if (isset($_SESSION['success'])) {
-                                    echo "<div class='alert alert-success'>" . $_SESSION['success'] . "</div>";
-                                    unset($_SESSION['success']);
-                                }
-                                if (isset($_SESSION['error'])) {
-                                    echo "<div class='alert alert-danger'>" . $_SESSION['error'] . "</div>";
-                                    unset($_SESSION['error']);
-                                }
-                            ?>
-                            <form action="update-local-authority.php" method="post" enctype="multipart/form-data">
-                                <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
-                                <h3>Basic Information</h3>
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="name" class="form-label">Authority Name</label>
-                                            <input type="text" class="form-control" id="name" name="name" value="<?php echo htmlspecialchars($row['name'] ?? ''); ?>" required>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label>Authority Type</label>
-                                            <select name="type_id" id="type_id" class="form-control" required>
-                                                <option value="">-- Select Authority Type --</option>
-                                                <?php foreach ($local_authority_types as $authority_type): ?>
-                                                    <option value="<?= $authority_type['id'] ?>" <?= ($authority_type['id'] == $row['type_id']) ? 'selected' : '' ?>><?= htmlspecialchars($authority_type['name']) ?></option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <h3>Authority Location</h3>
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label>State</label>
-                                            <select name="state_id" id="state_id" class="form-control">
-                                                <option value="">Choose State</option>
-                                                <option value="14" selected>Maharashtra</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label>District</label>
-                                            <select name="district_id" id="district_id" class="form-control">
-                                                <option value="">Choose District</option>
-                                                <?php foreach ($districts as $district): ?>
-                                                    <option value="<?= $district['id'] ?>" <?= ($district['id'] == $district_id) ? 'selected' : '' ?>><?= htmlspecialchars($district['name']) ?></option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label>Taluka</label>
-                                            <select name="taluka_id" id="taluka_id" class="form-control">
-                                                <option value="">Choose Taluka</option>
-                                                <?php foreach ($talukas as $taluka): ?>
-                                                    <option value="<?= $taluka['id'] ?>" <?= ($taluka['id'] == $taluka_id) ? 'selected' : '' ?>><?= htmlspecialchars($taluka['name']) ?></option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label>Village</label>
-                                            <select name="village_id" id="village_id" class="form-control">
-                                                <option value="">Choose Village</option>
-                                                <?php foreach ($villages as $village): ?>
-                                                    <option value="<?= $village['id'] ?>" <?= ($village['id'] == $village_id) ? 'selected' : '' ?>><?= htmlspecialchars($village['name']) ?></option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-12">
-                                        <div class="form-group">
-                                            <label>Address</label>
-                                            <textarea name="address" class="form-control" placeholder="Enter Authority Address">
-                                                <?= htmlspecialchars($row['address'] ?? '') ?>
-                                            </textarea>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <br/><br/>
-                                <button type="submit" class="btn btn-info">Update</button>
-                                <a href="local-authorities.php" class="btn btn-default ml-2">Cancel</a>
-                                      
-                            </form>
-                        </div>
-                    </div>
-                </div>
-                <!-- /.card-body -->
+      <div class="container-fluid">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Edit Implementing Agency</h3>
+            <div class="card-tools">
+              <a href="local-authorities.php" class="btn btn-primary">
+                <i class="fas fa-eye"></i> Local Authority List
+              </a>
             </div>
-        </div><!-- /.container-fluid -->
-    </div>
-    <!-- /.content -->
-  </div>
-  <!-- /.content-wrapper -->
+          </div>
+          <div class="card-body p-4">
+            <?php
+              if (isset($_SESSION['success'])) {
+                  echo "<div class='alert alert-success'>" . $_SESSION['success'] . "</div>";
+                  unset($_SESSION['success']);
+              }
+              if (isset($_SESSION['error'])) {
+                  echo "<div class='alert alert-danger'>" . $_SESSION['error'] . "</div>";
+                  unset($_SESSION['error']);
+              }
+            ?>
+            <form action="update-local-authority.php" method="post" enctype="multipart/form-data">
+              <input type="hidden" name="id" value="<?= htmlspecialchars($authority['id']) ?>">
 
-  <!-- Main Footer -->
+              <h3>Basic Information</h3>
+              <div class="row">
+                <div class="col-md-6">
+                  <label>Authority Name</label>
+                  <input type="text" class="form-control" name="name" value="<?= htmlspecialchars($authority['name']) ?>">
+                </div>
+                <div class="col-md-6">
+                  <label>Authority Type</label>
+                  <select name="authority_type_id" class="form-control">
+                    <option value="">-- Select Type --</option>
+                    <?php foreach ($local_authority_types as $type): ?>
+                      <option value="<?= $type['id'] ?>" <?= ($authority['type_id'] == $type['id']) ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($type['name']) ?>
+                      </option>
+                    <?php endforeach; ?>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label>Authority Department</label>
+                  <select name="department_id" class="form-control">
+                    <option value="">-- Select Department --</option>
+                    <?php foreach ($authority_departments as $dept): ?>
+                      <option value="<?= $dept['id'] ?>" <?= ($authority['authority_department_id'] == $dept['id']) ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($dept['name']) ?>
+                      </option>
+                    <?php endforeach; ?>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label>Sub Department</label>
+                  <select name="subdepartment_id" class="form-control">
+                    <option value="">-- Select Subdepartment --</option>
+                    <?php foreach ($local_authority_subdepartments as $sub): ?>
+                      <option value="<?= $sub['id'] ?>" <?= ($authority['authority_subdepartment_id'] == $sub['id']) ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($sub['name']) ?>
+                      </option>
+                    <?php endforeach; ?>
+                  </select>
+                </div>
+              </div>
+
+              <br>
+              <h3>Authority Documents</h3>
+              <div class="row">
+                <div class="col-md-6">
+                  <label>PAN Card Number</label>
+                  <input type="text" class="form-control" name="pancard" maxlength="10" value="<?= htmlspecialchars($authority['pancard'] ?? '') ?>">
+                </div>
+                <div class="col-md-6">
+                  <label>Upload PAN Card</label>
+                  <input type="file" class="form-control-file" name="pancard_path" accept="image/*,application/pdf">
+                  <?php if ($authority['pancard_path']): ?>
+                    <small>Current: <a href="../<?= $authority['pancard_path'] ?>" target="_blank">View File</a></small>
+                  <?php endif; ?>
+                </div>
+                <div class="col-md-6">
+                  <label>Aadhaar Number</label>
+                  <input type="text" class="form-control" name="aadhaar" maxlength="12" value="<?= htmlspecialchars($authority['aadhaar']) ?>">
+                </div>
+                <div class="col-md-6">
+                  <label>Upload Aadhaar</label>
+                  <input type="file" class="form-control-file" name="aadhaar_path" accept="image/*,application/pdf">
+                  <?php if ($authority['aadhaar_path']): ?>
+                    <small>Current: <a href="../<?= $authority['aadhaar_path'] ?>" target="_blank">View File</a></small>
+                  <?php endif; ?>
+                </div>
+                <div class="col-md-6">
+                  <label>GSTN</label>
+                  <input type="text" class="form-control" name="gstn" maxlength="15" value="<?= htmlspecialchars($authority['gstn']) ?>">
+                </div>
+              </div>
+
+              <br>
+              <h3>Authority Location</h3>
+              <div class="row">
+                <div class="col-md-6">
+                  <label>State</label>
+                  <select name="state_id" class="form-control">
+                    <option value="14" <?= ($authority['state_id'] == 14) ? 'selected' : '' ?>>Maharashtra</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label>District</label>
+                  <select name="district_id" class="form-control">
+                    <option value="">-- Choose District --</option>
+                    <?php foreach ($districts as $dist): ?>
+                      <option value="<?= $dist['id'] ?>" <?= ($authority['district_id'] == $dist['id']) ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($dist['name']) ?>
+                      </option>
+                    <?php endforeach; ?>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label>Taluka</label>
+                  <select name="taluka_id" class="form-control">
+                    <option value="">-- Choose Taluka --</option>
+                    <?php foreach ($talukas as $taluka): ?>
+                      <option value="<?= $taluka['id'] ?>" <?= ($authority['taluka_id'] == $taluka['id']) ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($taluka['name']) ?>
+                      </option>
+                    <?php endforeach; ?>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label>Village</label>
+                  <select name="village_id" class="form-control">
+                    <option value="">-- Choose Village --</option>
+                    <?php foreach ($villages as $village): ?>
+                      <option value="<?= $village['id'] ?>" <?= ($authority['village_id'] == $village['id']) ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($village['name']) ?>
+                      </option>
+                    <?php endforeach; ?>
+                  </select>
+                </div>
+                <div class="col-md-12">
+                  <label>Address</label>
+                  <textarea name="address" class="form-control"><?= htmlspecialchars($authority['address'] ?? '') ?></textarea>
+                </div>
+              </div>
+
+              <br>
+              <h3>Authority User</h3>
+              <div class="row">
+                <div class="col-md-6">
+                  <label>CAFO (Chief Account Finance Officer)</label>
+                  <select name="user_id" class="form-control">
+                    <option value="">-- Select User --</option>
+                    <?php foreach ($users as $user): ?>
+                      <option value="<?= $user['id'] ?>" <?= ($authority['user_id'] == $user['id']) ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($user['name'] ?? '') ?>
+                      </option>
+                    <?php endforeach; ?>
+                  </select>
+                </div>
+              </div>
+
+              <br>
+              <button type="submit" class="btn btn-info">Update</button>
+              <a href="local-authorities.php" class="btn btn-default ml-2">Cancel</a>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <?php include('includes/footer.php'); ?>
 </div>
-<!-- ./wrapper -->
 
-<!-- REQUIRED SCRIPTS -->
-
-<!-- jQuery -->
 <script src="../plugins/jquery/jquery.min.js"></script>
-<!-- Bootstrap 4 -->
 <script src="../plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
-<!-- AdminLTE App -->
 <script src="../dist/js/adminlte.min.js"></script>
-<!-- AJAX for dynamic Project Type -->
-<script>
-    // Get references to the dropdowns
-    const districtSelect = document.getElementById('district_id');
-    const talukaSelect = document.getElementById('taluka_id');
-    const villageSelect = document.getElementById('village_id');
-
-    // Function to fetch data from the server
-    async function fetchData(url, bodyData) {
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: bodyData
-            });
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const data = await response.json();
-            return data;
-        } catch (error) {
-            console.error('Fetch error:', error);
-            return []; // Return empty array on error
-        }
-    }
-
-    // Function to populate a dropdown
-    function populateDropdown(selectElement, data, placeholderText) {
-        // Clear existing options
-        selectElement.innerHTML = `<option value="">${placeholderText}</option>`;
-        // Add new options from the fetched data
-        data.forEach(item => {
-            const option = document.createElement('option');
-            option.value = item.id;
-            option.textContent = item.name;
-            selectElement.appendChild(option);
-        });
-    }
-
-    // Event listener for the District dropdown
-    districtSelect.addEventListener('change', async () => {
-        const districtId = districtSelect.value;
-        // Clear taluka and village dropdowns
-        populateDropdown(talukaSelect, [], 'Choose Taluka');
-        populateDropdown(villageSelect, [], 'Choose Village');
-
-        if (districtId) {
-            const talukas = await fetchData('fetch_data.php', `type=talukas&id=${districtId}`);
-            populateDropdown(talukaSelect, talukas, 'Choose Taluka');
-        }
-    });
-
-    // Event listener for the Taluka dropdown
-    talukaSelect.addEventListener('change', async () => {
-        const talukaId = talukaSelect.value;
-        // Clear village dropdown
-        populateDropdown(villageSelect, [], 'Choose Village');
-
-        if (talukaId) {
-            const villages = await fetchData('fetch_data.php', `type=villages&id=${talukaId}`);
-            populateDropdown(villageSelect, villages, 'Choose Village');
-        }
-    });
-
-</script>
-
 </body>
 </html>

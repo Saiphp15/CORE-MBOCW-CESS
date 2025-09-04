@@ -43,6 +43,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Set a default value for is_active.
     $is_active_status = 1; 
+    $created_by = $_SESSION['user_id']; // Assuming the logged-in user's ID is stored in the session
 
     // Basic validation check. You can add more complex validation as needed.
     if (empty($name) || empty($email) || empty($password) || empty($phone)) {
@@ -72,8 +73,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         gstn, 
         pancard, 
         aadhaar,
-        is_active
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        is_active,
+        created_by
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     
     $stmt = $conn->prepare($sql);
 
@@ -85,7 +87,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Bind parameters to the prepared statement, ensuring order and data types match.
     // 's' for string, 'i' for integer.
-    $stmt->bind_param("sssisiiisissssi", 
+    $stmt->bind_param("sssisiiisissssii", 
         $name, 
         $email, 
         $hashed_password,
@@ -100,11 +102,33 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $gstn, 
         $pancard, 
         $aadhaar,
-        $is_active_status
+        $is_active_status,
+        $created_by
     );
 
     // Execute the statement and check for success.
     if ($stmt->execute()) {
+
+        $last_inserted_user_id = $conn->insert_id; // Get the ID of the newly inserted user
+
+        //get local authority id from local_authorities_users based on logged in user id
+        $getLoggedInUserLocalAuthorityId = $conn->query("SELECT local_authority_id FROM local_authorities_users WHERE user_id = " . $_SESSION['user_id'] . " LIMIT 1");
+        if ($getLoggedInUserLocalAuthorityId->num_rows > 0) {
+            $row = $getLoggedInUserLocalAuthorityId->fetch_assoc();
+            $local_authority_id = $row['local_authority_id'];
+        } else {
+            $local_authority_id = 0; // Default to 0 if not found
+        }
+
+        // Insert into local_authorities_users ---
+        $stmt = $conn->prepare("INSERT INTO local_authorities_users (local_authority_id, user_id, role, is_active, created_at) VALUES (?, ?, ?, 1, NOW())");
+        $stmt->bind_param("iii", $local_authority_id, $last_inserted_user_id, $role_id);
+        if (!$stmt->execute()) {
+            $_SESSION['error'] = "Failed to link user to local authority: " . $stmt->error;
+            header("Location: add-user.php");
+            exit;
+        }
+
         $_SESSION['success'] = "User added successfully!";
 
         // --- 3. Send Welcome Email ---

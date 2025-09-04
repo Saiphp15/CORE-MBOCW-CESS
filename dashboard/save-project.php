@@ -13,9 +13,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Basic Project Information
     $project_name = $_POST['project_name'];
     $project_description = $_POST['project_description'] ?? null; // Added project_description, not required but good practice
-    $project_category_id = $_POST['category_id'];
-    $project_type_id = $_POST['type_id'];
-    $local_authority_id = $_POST['local_authority_id'];
+    
+    
+
     $construction_cost = $_POST['construction_cost'];
     $project_start_date = $_POST['project_start_date'];
     $project_end_date = $_POST['project_end_date'];
@@ -29,6 +29,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $status = 'Pending';
     $created_by = $_SESSION['user_id'];
     $updated_by = $_SESSION['user_id'];
+
+
 
     // Work Order Details (Arrays)
     $work_order_numbers = $_POST['work_order_number'];
@@ -45,13 +47,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Start transaction
         $conn->begin_transaction();
 
+        $localAuthorityUsers = $conn->prepare("SELECT id,local_authority_id FROM local_authorities_users WHERE user_id = ? AND is_active = 1 LIMIT 1");
+        $localAuthorityUsers->bind_param("i", $_SESSION['user_id']);
+        $localAuthorityUsers->execute();
+        $localAuthorityUsersResult = $localAuthorityUsers->get_result();
+        if ($localAuthorityUsersResult->num_rows === 0) {
+            throw new Exception("User is not associated with any Local Authority.");
+        }
+        $localAuthorityUsersRow = $localAuthorityUsersResult->fetch_assoc();
+        $user_id = $localAuthorityUsersRow['id'];
+        $local_authority_id = $localAuthorityUsersRow['local_authority_id'];
+
+        // Fetch category and type IDs based on local authority
+        $auth_stmt = $conn->prepare("SELECT type_id, authority_department_id, authority_subdepartment_id FROM local_authorities WHERE id = ?");
+        $auth_stmt->bind_param("i", $local_authority_id);
+        $auth_stmt->execute();
+        $auth_result = $auth_stmt->get_result();
+        if ($auth_result->num_rows === 0) {
+            throw new Exception("Invalid Local Authority selected.");
+        }
+        $auth_row = $auth_result->fetch_assoc();
+        $type_id = $auth_row['type_id'];
+        $authority_department_id = $auth_row['authority_department_id'];
+        $authority_subdepartment_id = $auth_row['authority_subdepartment_id'];
+
+        // Validate required fields
+        if (empty($project_name) || empty($local_authority_id) || empty($construction_cost) || empty($project_start_date) || empty($project_end_date) || empty($pin_code) || empty($project_address)) {
+            throw new Exception("Please fill in all required fields.");
+        }
+
+        // Validate work order details
+        if (empty($work_order_numbers) || empty($work_order_date) || empty($work_order_amounts) || count($work_order_numbers) !== count($work_order_date) || count($work_order_numbers) !== count($work_order_amounts)) {
+            throw new Exception("Please provide valid work order details.");
+        }
+
+        // Calculate total work order amount and validate against construction cost
+        $total_work_order_amount = array_sum(array_map('floatval', $work_order_amounts));
+        if ($total_work_order_amount > floatval($construction_cost)) {
+            throw new Exception("Total work order amount cannot exceed construction cost.");
+        }
+    
         // Step 1: Insert into projects table
-        $project_stmt = $conn->prepare("INSERT INTO projects (project_name, project_category_id, project_type_id, local_authority_id, construction_cost, project_start_date, project_end_date, cess_amount, state_id, district_id, taluka_id, village_id, pin_code, project_address, status, created_by, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $project_stmt->bind_param("siiidssdiiiiissii",
+        $project_stmt = $conn->prepare("INSERT INTO projects (project_name, construction_cost, project_start_date, project_end_date, cess_amount, state_id, district_id, taluka_id, village_id, pin_code, project_address, status, created_by, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $project_stmt->bind_param("sdssdiiiiissii",
             $project_name,
-            $project_category_id,
-            $project_type_id,
-            $local_authority_id,
             $construction_cost,
             $project_start_date,
             $project_end_date,
@@ -75,8 +114,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $project_id = $project_stmt->insert_id;
 
         // Step 2: Fetch codes for category, type, and authority
-        $cat_res = $conn->query("SELECT UPPER(LEFT(name,3)) AS code FROM project_categories WHERE id = $project_category_id");
-        $type_res = $conn->query("SELECT UPPER(LEFT(name,3)) AS code FROM project_types WHERE id = $project_type_id");
+        $cat_res = $conn->query("SELECT UPPER(LEFT(name,3)) AS code FROM authority_departments WHERE id = $authority_department_id");
+        $type_res = $conn->query("SELECT UPPER(LEFT(name,3)) AS code FROM authority_subdepartments WHERE id = $authority_subdepartment_id");
         $auth_res = $conn->query("SELECT UPPER(LEFT(name,3)) AS code FROM local_authorities WHERE id = $local_authority_id");
 
         $cat_code = ($cat_res->num_rows > 0) ? $cat_res->fetch_assoc()['code'] : "CAT";
@@ -103,10 +142,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             for ($i = 0; $i < $total_work_orders; $i++) {
                 $work_order_number = $work_order_numbers[$i];
-                $work_order_date = $work_order_date[$i];
+                $work_order_date = null;
+                if (!empty($work_order_dates[$i])) {
+                    $work_order_date = date("Y-m-d", strtotime($work_order_dates[$i]));
+                }
                 $work_order_amount = $work_order_amounts[$i];
                 $work_order_cess_amount = $work_order_amounts[$i] * 0.01; // Assuming 1% cess amount calculation
-                $work_order_gst_cess_amount = $work_order_cess_amount * 1.025; // This seems to be the Cess amount + GST on Cess (2.5%)
+                $work_order_gst_cess_amount = $work_order_cess_amount; // This seems to be the Cess amount + GST on Cess (2.5%)
                 $work_order_administrative_cost = $work_order_gst_cess_amount * 0.01;
                 $work_order_effective_cess_amount = $work_order_gst_cess_amount - $work_order_administrative_cost;
                 $work_order_employer_id = $work_order_employer_ids[$i];
@@ -164,7 +206,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['error'] = "Transaction failed: " . $e->getMessage();
     }
 
-    header("Location: projects.php");
+    header("Location: add-project.php");
     exit;
 } else {
     $_SESSION['error'] = "Invalid request.";

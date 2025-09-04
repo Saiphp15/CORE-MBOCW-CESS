@@ -78,10 +78,10 @@ scratch. This page gets rid of all links and provides the needed markup only.
             <div class="card-header">
                 <h3 class="card-title">Project List</h3>
                 <div class="card-tools">
+                    <?php if(in_array($_SESSION['user_role'],[3,7])){ ?>
                     <a href="bulk-projects-invoice-cess-upload-form.php" class="btn btn-info" ><i class="fas fa-plus"></i> Bulk Projects Upload</a>
                     <a href="add-project.php" class="btn btn-primary" ><i class="fas fa-plus"></i> Add Project</a> 
-                    <button type="button" class="btn btn-tool" data-card-widget="collapse" data-toggle="tooltip" title="Collapse"><i class="fas fa-minus"></i></button>
-                    <button type="button" class="btn btn-tool" data-card-widget="remove" data-toggle="tooltip" title="Remove"><i class="fas fa-times"></i></button>
+                    <?php } ?>
                 </div>
             </div>
             <!-- /.card-header -->
@@ -101,9 +101,6 @@ scratch. This page gets rid of all links and provides the needed markup only.
                         <tr>
                             <th>Sr.No</th>
                             <th>Name</th>
-                            <th>Category</th>
-                            <th>Type</th>
-                            <th>Authority</th>
                             <th>Cost</th>
                             <th>Cess</th>
                             <th>Status</th>
@@ -112,28 +109,24 @@ scratch. This page gets rid of all links and provides the needed markup only.
                     </thead>
                     <tbody>
                         <?php
-                        $sql = "
-                            SELECT
-                                p.*,
-                                IFNULL(SUM(pwo.work_order_effective_cess_amount), 0) AS total_cess,
-                                pt.name AS project_type_name,
-                                pc.name AS project_category_name,
-                                la.name AS local_authority_name
-                            FROM
-                                projects AS p
-                            LEFT JOIN
-                                project_types AS pt ON p.project_type_id = pt.id
-                            LEFT JOIN
-                                project_categories AS pc ON p.project_category_id = pc.id
-                            LEFT JOIN 
-                                local_authorities AS la ON p.local_authority_id = la.id
-                            LEFT JOIN
-                                project_work_orders AS pwo ON p.id = pwo.project_id
-                            GROUP BY
-                                p.id, pt.name, pc.name
-                            ORDER BY
-                                p.id DESC
-                        ";
+                        $loggedInUserId     = $_SESSION['user_id'];
+                        $loggedInUserRole   = $_SESSION['user_role'];
+                        $sql = "";
+                        if ($loggedInUserId == 1 && $loggedInUserRole == 1) {
+                            // Superadmin: see all
+                            $sql = "SELECT * FROM projects AS p GROUP BY p.id ORDER BY p.id DESC";
+                        } elseif ($loggedInUserRole == 3) {
+                            // CAFO: see own + engineers under him
+                            $sql = "SELECT * FROM projects AS p WHERE p.created_by = $loggedInUserId 
+                                    OR p.created_by IN (
+                                        SELECT id FROM users WHERE created_by = $loggedInUserId
+                                    )
+                                    GROUP BY p.id ORDER BY p.id DESC";
+                        } elseif ($loggedInUserRole == 7) {
+                            // Engineer: see only his own
+                            $sql = "SELECT * FROM projects AS p WHERE p.created_by = $loggedInUserId GROUP BY p.id ORDER BY p.id DESC";
+                        }
+                        
                         $result = mysqli_query($conn, $sql);
                         $sr = 1;
                         if (mysqli_num_rows($result) > 0) {
@@ -141,11 +134,8 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                 echo "<tr>";
                                 echo "<td>{$sr}</td>";
                                 echo "<td>" . htmlspecialchars($row['project_name'] ?? '') . "</td>";
-                                echo "<td>" . htmlspecialchars($row['project_category_name'] ?? '') . "</td>";
-                                echo "<td>" . htmlspecialchars($row['project_type_name'] ?? '') . "</td>";
-                                echo "<td>" . htmlspecialchars($row['local_authority_name'] ?? '') . "</td>";
                                 echo "<td>₹" . number_format($row['construction_cost'], 2) . "</td>";
-                                echo "<td>₹" . number_format($row['total_cess'] ?? 0, 2) . "</td>";
+                                echo "<td>₹" . number_format($row['cess_amount'] ?? 0, 2) . "</td>";
                                 echo "<td>" . htmlspecialchars($row['status']) . "</td>";
                                 echo "<td>
                                         <a href='view-project.php?id=" . $row['id'] . "' class='btn btn-sm btn-info'><i class='fas fa-eye'></i></a>
@@ -155,7 +145,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                 $sr++;
                             }
                         } else {
-                            echo "<tr><td colspan='8' class='text-center'>No project found</td></tr>";
+                            echo "<tr><td colspan='6' class='text-center'>No project found</td></tr>";
                         }
                         ?>
                     </tbody>

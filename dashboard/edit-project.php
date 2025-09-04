@@ -15,15 +15,18 @@ if (!isset($_GET['id']) || empty($_GET['id'])) {
 $project_id = intval($_GET['id']);
 
 // Fetch project data
-$stmt = $conn->prepare("SELECT * FROM projects WHERE id = ?");
-$stmt->bind_param("i", $project_id);
+$stmt = $conn->prepare("
+SELECT p.*, lau.local_authority_id 
+FROM projects p
+LEFT JOIN local_authorities_users lau ON p.local_authority_id = lau.local_authority_id
+WHERE lau.user_id =? AND lau.is_active = 1 AND p.id = ? 
+");
+$loggedInUserId = intval($_SESSION['user_id']);
+$stmt->bind_param("ii", $loggedInUserId, $project_id);
 $stmt->execute();
 $project = $stmt->get_result()->fetch_assoc();
 
 // Fetch required dropdown values
-$categories = $conn->query("SELECT id, name FROM project_categories")->fetch_all(MYSQLI_ASSOC);
-$projectTypes = $conn->query("SELECT id, name FROM project_types")->fetch_all(MYSQLI_ASSOC);
-$local_authorities = $conn->query("SELECT id, name FROM local_authorities")->fetch_all(MYSQLI_ASSOC);
 $users = $conn->query("SELECT id, name FROM users")->fetch_all(MYSQLI_ASSOC);
 $employers = $conn->query("SELECT id, name FROM employers")->fetch_all(MYSQLI_ASSOC);
 $districts = $conn->query("SELECT id, name FROM districts")->fetch_all(MYSQLI_ASSOC);
@@ -109,46 +112,22 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                     unset($_SESSION['error']);
                                 }
                             ?>
-                            <form action="save-project.php" method="post" enctype="multipart/form-data">
+                            <form action="update-project.php" method="post" enctype="multipart/form-data">
+                                <input type="hidden" name="id" value="<?= $project['id'] ?>">
+                                <input type="hidden" name="local_authority_id" value="<?= $project['local_authority_id'] ?>">
+                                <!-- 
+                                    Note: The following hidden input is added to ensure that the local authority ID
+                                    associated with the logged-in user is passed along with the form submission.
+                                    This is important for maintaining data integrity and ensuring that the project
+                                    is correctly linked to the appropriate local authority.
+                                -->
+                                 
                                 <h3>Basic Project Information</h3>
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>Project Name</label>
                                             <input type="text" name="project_name" class="form-control" value="<?= htmlspecialchars($project['project_name']) ?>" required>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label>Project Category</label>
-                                            <select name="category_id" id="category_id" class="form-control"  required>
-                                                <option value="">-- Select Category --</option>
-                                                <?php foreach ($categories as $cat): ?>
-                                                    <option value="<?= $cat['id'] ?>" <?= $cat['id']==$project['project_category_id']?'selected':'' ?>><?= $cat['name'] ?></option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label>Project Type</label>
-                                            <select name="type_id" id="type_id" class="form-control" required>
-                                                <option value="">-- Select Type --</option>
-                                                <?php foreach ($projectTypes as $type): ?>
-                                                    <option value="<?= $type['id'] ?>" <?= $type['id']==$project['project_type_id']?'selected':'' ?>><?= $type['name'] ?></option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label>Local Authority</label>
-                                            <select name="local_authority_id" class="form-control" required>
-                                                <option value="">-- Select Local Authority --</option>
-                                                <?php foreach ($local_authorities as $la): ?>
-                                                    <option value="<?= $la['id'] ?>" <?= $la['id']==$project['local_authority_id']?'selected':'' ?>><?= $la['name'] ?></option>
-                                                <?php endforeach; ?>
-                                            </select>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
@@ -248,11 +227,11 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                             </div>
                                             <div class="col-md-6">
                                                 <label>Work Order Date</label>
-                                                <input type="date" value="<?= $wo['work_order_date'] ?>" name="work_order_date[]" class="form-control" >
+                                                <input type="date" value="<?= htmlspecialchars($wo['work_order_date']) ?>" name="work_order_date[]" class="form-control" >
                                             </div>
                                             <div class="col-md-6">
                                                 <label>Work Order Amount</label>
-                                                <input type="text" value="<?= $wo['work_order_amount'] ?>" name="work_order_amount[]" class="form-control" placeholder="Total value of work order">
+                                                <input type="text" value="<?= $wo['work_order_amount'] ?>" name="work_order_amount[]" class="form-control workorder_amount" placeholder="Total value of work order">
                                                 <input type="hidden" name="work_order_cess_amount" value="<?= $wo['work_order_cess_amount'] ?>" >
                                             </div>
                                             <div class="col-md-6">
@@ -267,7 +246,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                                 <select name="work_order_manager_id[]" class="form-control">
                                                     <option value="">Choose Manager</option>
                                                     <?php foreach ($users as $user): ?>
-                                                    <option value="<?= $user['id'] ?>" <?= $user['id']==$project['manager_id']?'selected':'' ?>><?= $user['name'] ?></option>
+                                                    <option value="<?= $user['id'] ?>" <?= $user['id']==$wo['manager_id']?'selected':'' ?>><?= $user['name'] ?></option>
                                                     <?php endforeach; ?>
                                                 </select>
                                             </div>
@@ -276,7 +255,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                                 <select name="work_order_engineer_id[]" class="form-control">
                                                     <option value="">Choose Engineer</option>
                                                     <?php foreach ($users as $user): ?>
-                                                    <option value="<?= $user['id'] ?>" <?= $user['id']==$project['engineer_id']?'selected':'' ?>><?= $user['name'] ?></option>
+                                                    <option value="<?= $user['id'] ?>" <?= $user['id']==$wo['engineer_id']?'selected':'' ?>><?= $user['name'] ?></option>
                                                     <?php endforeach; ?>
                                                 </select>
                                             </div>
@@ -285,7 +264,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                                 <select name="work_order_employer_id[]" class="form-control">
                                                     <option value="">Choose Employer</option>
                                                     <?php foreach ($employers as $employee): ?>
-                                                    <option value="<?= $employee['id'] ?>" <?= $user['id']==$project['employer_id']?'selected':'' ?>><?= $employee['name'] ?></option>
+                                                    <option value="<?= $employee['id'] ?>" <?= $employee['id']==$wo['employer_id']?'selected':'' ?>><?= $employee['name'] ?></option>
                                                     <?php endforeach; ?>
                                                 </select>
                                             </div>
@@ -421,22 +400,40 @@ scratch. This page gets rid of all links and provides the needed markup only.
         }
     }
 
+    function getTotalWorkOrderAmount() {
+        let total = 0;
+        document.querySelectorAll('.workorder_amount').forEach(input => {
+            total += parseFloat(input.value) || 0;
+        });
+        return total;
+    }
+
+    // Restrict while typing (live validation)
+    document.addEventListener("input", function (e) {
+        if (e.target.classList.contains("workorder_amount")) {
+            const constructionCost = parseFloat(document.getElementById('construction_cost').value) || 0;
+            const total = getTotalWorkOrderAmount();
+
+            if (total > constructionCost) {
+            alert("Total workorder amount cannot exceed construction cost!");
+            e.target.value = "";
+            }
+        }
+    });
+
     // Add an event listener to the construction cost input field.
     // The 'input' event fires whenever the value of the element changes.
     constructionCostInput.addEventListener('input', calculateCess);
 
-    $('#category_id').on('change', function () {
-    const categoryId = $(this).val();
-    if (categoryId) {
-        $.get('get-types.php?category_id=' + categoryId, function (data) {
-        $('#type_id').html(data);
-        });
-    } else {
-        $('#type_id').html('<option value="">-- Select Type --</option>');
-    }
-    });
-
     document.getElementById('addMoreBtn').addEventListener('click', function () {
+
+        const constructionCost = parseFloat(document.getElementById('construction_cost').value) || 0;
+        const total = getTotalWorkOrderAmount();
+        if (total >= constructionCost) {
+            alert("Cannot add more work orders. Construction cost limit reached!");
+            return;
+        }
+
         const container = document.getElementById('workOrderContainer');
         const sections = container.getElementsByClassName('work-order-section');
         const lastSection = sections[sections.length - 1];
@@ -465,7 +462,38 @@ scratch. This page gets rid of all links and provides the needed markup only.
             }
         }
     });
-</script>
+    
 
+    // Get references to date inputs
+    const startDateInput = document.querySelector('input[name="project_start_date"]');
+    const endDateInput = document.querySelector('input[name="project_end_date"]');
+    const form = document.querySelector('form');
+
+    // Function to validate dates
+    function validateProjectDates() {
+        const startDate = new Date(startDateInput.value);
+        const endDate = new Date(endDateInput.value);
+
+        if (startDateInput.value && endDateInput.value) {
+            if (endDate < startDate) {
+                alert("❌ Project End Date cannot be earlier than Start Date.");
+                endDateInput.value = ""; // reset invalid value
+                endDateInput.focus();
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // Trigger validation when end date changes
+    endDateInput.addEventListener('change', validateProjectDates);
+
+    // Also validate on form submit
+    form.addEventListener('submit', function (e) {
+        if (!validateProjectDates()) {
+            e.preventDefault(); // stop form submission
+        }
+    });
+</script>
 </body>
 </html>

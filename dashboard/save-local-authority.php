@@ -1,90 +1,191 @@
 <?php
 session_start();
-require_once '../config/db.php'; // DB connection
+require_once "../config/db.php"; // your DB connection
 
-// Security check: ensure user is logged in
-if (!isset($_SESSION['user_id'])) {
-    header("Location: ../login.php");
-    exit;
+$logFile = __DIR__ . "/../logs/error_log.txt";
+function logError($message) {
+    global $logFile;
+    $timestamp = date("Y-m-d H:i:s");
+    file_put_contents($logFile, "[$timestamp] $message\n", FILE_APPEND);
 }
 
-// Save old values in case of error
 $_SESSION['old_values'] = $_POST;
+$errors = [];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $name       = trim($_POST['name'] ?? '');
+    $type_id    = $_POST['authority_type_id'] ?? null;
+    $dept_id    = $_POST['department_id'] ?? null;
+    $subdept_id = $_POST['subdepartment_id'] ?? null;
+    $state_id   = $_POST['state_id'] ?? null;
+    $district_id= $_POST['district_id'] ?? null;
+    $taluka_id  = !empty($_POST['taluka_id']) ? $_POST['taluka_id'] : null;
+    $village_id = !empty($_POST['village_id']) ? $_POST['village_id'] : null;
+    $address    = trim($_POST['address'] ?? '');
+    $user_id    = $_POST['user_id'] ?? null;
 
-    // Collect & sanitize inputs
-    $authority_name  = trim($_POST['authority_name'] ?? '');
-    $authority_type  = intval($_POST['authority_type_id'] ?? 0);
-    $state_id        = intval($_POST['state_id'] ?? 0);
-    $district_id     = intval($_POST['district_id'] ?? 0);
-    $taluka_id       = intval($_POST['taluka_id'] ?? 0);
-    $village_id      = intval($_POST['village_id'] ?? 0);
-    $address         = trim($_POST['address'] ?? '');
-    $contact_email   = trim($_POST['contact_email'] ?? '');
-    $contact_phone   = trim($_POST['contact_phone'] ?? '');
+    $pancard        = trim($_POST['pancard'] ?? '');
+    $aadhaar    = trim($_POST['aadhaar'] ?? '');
+    $gstn       = trim($_POST['gstn'] ?? '');
 
-    // --- Validation ---
-    if (empty($authority_name) || empty($authority_type) || empty($state_id) || empty($district_id)) {
-        $_SESSION['error'] = "Authority name, type, state, and district are required.";
+    // ---------------- Validation ----------------
+    if (empty($name)) {
+        $errors[] = "Authority name is required.";
+    }
+
+    if (empty($type_id) || !ctype_digit($type_id)) {
+        $errors[] = "Valid authority type is required.";
+    }
+
+    if (empty($dept_id) || !ctype_digit($dept_id)) {
+        $errors[] = "Valid department is required.";
+    }
+
+    if (empty($subdept_id) || !ctype_digit($subdept_id)) {
+        $errors[] = "Valid subdepartment is required.";
+    }
+
+    // Validation functions
+    function validatePAN($pancard) {
+        return preg_match("/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/", $pancard);
+    }
+    function validateAadhaar($aadhaar) {
+        return preg_match("/^[2-9]{1}[0-9]{11}$/", $aadhaar);
+    }
+    function validateGSTIN($gst) {
+        return preg_match("/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/", $gst);
+    }
+    if ($pancard && !validatePAN($pancard)) {
+        $errors[] = "Invalid PAN format.";
+    }
+        
+    if ($aadhaar && !validateAadhaar($aadhaar)) {
+        $errors[] = "Invalid Aadhaar format.";
+    }
+    
+    if ($gst && !validateGSTIN($gst)) {
+        $errors[] = "Invalid GSTIN format.";
+    }
+
+    if (empty($state_id) || !ctype_digit($state_id)) {
+        $errors[] = "Valid state is required.";
+    }
+
+    if (empty($district_id) || !ctype_digit($district_id)) {
+        $errors[] = "Valid district is required.";
+    }
+
+    if ($taluka_id !== null && !ctype_digit($taluka_id)) {
+        $errors[] = "Invalid taluka.";
+    }
+    if ($village_id !== null && !ctype_digit($village_id)) {
+        $errors[] = "Invalid village.";
+    }
+
+    $address = trim($_POST['address'] ?? '');
+    if (strlen($address) > 255) {
+        $errors[] = "Address too long (max 255 chars).";
+    }
+
+    if (empty($_POST['user_id']) || !ctype_digit($_POST['user_id'])) {
+        $errors[] = "Valid user (CAFO) is required.";
+    }
+
+    if (!empty($errors)) {
+        $_SESSION['error'] = implode("<br>", $errors);
         header("Location: add-local-authority.php");
         exit;
     }
 
-    if (!empty($contact_email) && !filter_var($contact_email, FILTER_VALIDATE_EMAIL)) {
-        $_SESSION['error'] = "Invalid email format.";
-        header("Location: add-local-authority.php");
-        exit;
-    }
+    // ---------------- File Uploads ----------------
+    $panPath = null;
+    $aadhaarPath = null;
 
-    if (!empty($contact_phone) && !preg_match("/^[0-9]{10}$/", $contact_phone)) {
-        $_SESSION['error'] = "Phone number must be 10 digits.";
-        header("Location: add-local-authority.php");
-        exit;
+    function uploadFile($field, $folder) {
+        if (!isset($_FILES[$field]) || $_FILES[$field]['error'] !== UPLOAD_ERR_OK) return null;
+        $allowed = ['jpg','jpeg','png','pdf'];
+        $ext = strtolower(pathinfo($_FILES[$field]['name'], PATHINFO_EXTENSION));
+        if (!in_array($ext, $allowed)) {
+            throw new Exception("Invalid file type for $field");
+        }
+        $dir = __DIR__ . "/../uploads/local_authorities/$folder/";
+        if (!is_dir($dir)) mkdir($dir, 0777, true);
+        $newName = uniqid($field . "_") . "." . $ext;
+        $dest = $dir . $newName;
+        if (!move_uploaded_file($_FILES[$field]['tmp_name'], $dest)) {
+            throw new Exception("Failed to upload $field");
+        }
+        return "uploads/local_authorities/$folder/" . $newName;
     }
 
     try {
+        $panPath     = uploadFile('pancard_path', 'pan_cards');
+        $aadhaarPath = uploadFile('aadhaar_path', 'aadhaar_cards');
+    } catch (Exception $e) {
+        $errors[] = $e->getMessage();
+    }
+
+    // ---------------- Insert with Transaction ----------------
+    try {
         $conn->begin_transaction();
 
-        // Duplicate check (same name + district)
-        $check = $conn->prepare("SELECT id FROM local_authorities WHERE name = ? AND district_id = ?");
-        $check->bind_param("si", $authority_name, $district_id);
-        $check->execute();
-        $check->store_result();
+        // Insert into local_authorities
+        $sql = "INSERT INTO local_authorities 
+                (name, type_id, authority_department_id, authority_subdepartment_id, 
+                 state_id, district_id, taluka_id, village_id, address, 
+                 pancard, pancard_path, aadhaar, aadhaar_path, gstn, 
+                 is_active, created_at, updated_at) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, NOW(), NOW())";
 
-        if ($check->num_rows > 0) {
-            $check->close();
-            $_SESSION['error'] = "A local authority with this name already exists in the selected district.";
-            header("Location: add-local-authority.php");
-            exit;
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) throw new Exception("Prepare failed: " . $conn->error);
+
+        $stmt->bind_param(
+            "siiiiiiissssss",
+            $name, $type_id, $dept_id, $subdept_id,
+            $state_id, $district_id, $taluka_id, $village_id,
+            $address, $pancard, $panPath, $aadhaar, $aadhaarPath, $gstn
+        );
+
+        if (!$stmt->execute()) {
+            throw new Exception("Insert authority failed: " . $stmt->error);
         }
-        $check->close();
 
-        // Insert query
-        $stmt = $conn->prepare("
-            INSERT INTO local_authorities 
-            (type_id, name, state_id, district_id, taluka_id, village_id, address, contact_email, contact_phone, created_at, updated_at) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
-        ");
-        $stmt->bind_param("isiiiisss", $authority_type, $authority_name, $state_id, $district_id, $taluka_id, $village_id, $address, $contact_email, $contact_phone);
+        $local_authority_id = $stmt->insert_id;
+        $stmt->close();
 
-        if ($stmt->execute()) {
-            $conn->commit();
-            $_SESSION['success'] = "Local Authority added successfully!";
-            unset($_SESSION['old_values']); // clear old values after success
-        } else {
-            $conn->rollback();
-            $_SESSION['error'] = "Failed to save local authority. Please try again.";
+        // Insert mapping into local_authorities_users
+        $sql = "INSERT INTO local_authorities_users 
+                (local_authority_id, user_id, is_active, created_at, updated_at)
+                VALUES (?, ?, 1, NOW(), NOW())";
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            throw new Exception("Prepare failed: " . $conn->error);
+        }
+
+        $stmt->bind_param("ii", $local_authority_id, $_POST['user_id']);
+
+        if (!$stmt->execute()) {
+            throw new Exception("Insert mapping failed: " . $stmt->error);
         }
 
         $stmt->close();
+        $conn->commit();
+
+        unset($_SESSION['old_values']);
+        $_SESSION['success'] = "Local authority and mapping saved successfully.";
+        header("Location: local-authorities.php");
+        exit;
+
     } catch (Exception $e) {
         $conn->rollback();
-        $_SESSION['error'] = "Database error: " . $e->getMessage();
+        logError("Error saving authority: " . $e->getMessage());
+        $_SESSION['error'] = "Something went wrong while saving. Please try again.";
+        header("Location: add-local-authority.php");
+        exit;
     }
-
-    $conn->close();
+} else {
+    $_SESSION['error'] = "Invalid request.";
     header("Location: add-local-authority.php");
     exit;
 }
-?>

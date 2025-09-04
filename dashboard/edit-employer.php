@@ -187,7 +187,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>GSTN</label>
-                                            <input type="text" name="gstn" value="<?php echo htmlspecialchars($employer['gstn'] ?? ''); ?>" class="form-control" required>
+                                            <input type="text" name="gstn" value="<?php echo htmlspecialchars($employer['gstn'] ?? ''); ?>" class="form-control" >
                                         </div>
                                     </div>
                                 </div>

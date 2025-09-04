@@ -4,6 +4,8 @@ require_once 'config/db.php';
 
 // Fetch required dropdown values
 $localAuthorityTypes = $conn->query("SELECT id, name FROM local_authority_types")->fetch_all(MYSQLI_ASSOC);
+$authority_departments = $conn->query("SELECT id, name FROM authority_departments")->fetch_all(MYSQLI_ASSOC);
+$local_authority_subdepartments = $conn->query("SELECT id, name FROM authority_subdepartments")->fetch_all(MYSQLI_ASSOC);
 $districts = $conn->query("SELECT id, name FROM districts")->fetch_all(MYSQLI_ASSOC);
 
 $old = $_SESSION['old'] ?? [];
@@ -14,7 +16,6 @@ if (isset($_SESSION['success']) && !empty($_SESSION['success'])){
     unset($_SESSION['error']);
     unset($_SESSION['old']);
 }
-
 ?>
 <!DOCTYPE html>
 <html>
@@ -258,6 +259,80 @@ if (isset($_SESSION['success']) && !empty($_SESSION['success'])){
                     <?php endforeach; ?>
 				</select>
 			</div>
+
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>Authority Department</label>
+                    <select name="department_id" id="department_id" class="form-control" >
+                        <option value="">-- Select Department --</option>
+                        <?php foreach ($authority_departments as $department): ?>
+                            <option value="<?= $department['id'] ?>" 
+                                <?= (isset($_SESSION['old_values']['department_id']) 
+                                    && $_SESSION['old_values']['department_id'] == $department['id']) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($department['name']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>Authority Sub Department</label>
+                    <select name="subdepartment_id" id="subdepartment_id" class="form-control" >
+                        <option value="">-- Select Subdepartment --</option>
+                        <?php foreach ($local_authority_subdepartments as $subdept): ?>
+                            <option value="<?= $subdept['id'] ?>" 
+                                <?= (isset($_SESSION['old_values']['subdepartment_id']) 
+                                    && $_SESSION['old_values']['subdepartment_id'] == $subdept['id']) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($subdept['name']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+				<label class="form-label">PAN Card No <span class="text-danger">*</span></label>
+				<input type="text" class="form-control" value="<?= htmlspecialchars($old['pan_no'] ?? '') ?>" name="authority_pancard" id="pancard" maxlength="10" placeholder="Enter 10 character PAN" required>
+                <div id="panError" class="error"></div>
+			</div>
+			<div class="col-md-6">
+				<label class="form-label">GSTN </label>
+				<input type="text" class="form-control " value="<?= htmlspecialchars($old['gstn'] ?? '') ?>"  name="authority_gstn" id="gstn" maxlength="16" placeholder="Enter 15 character GSTN" >
+                <div id="gstnError" class="error"></div>
+			</div>
+            <div class="col-md-6">
+				<label class="form-label">State <span class="text-danger">*</span></label>
+				<select class="form-select stateChange" name="authority_state" id="authority_state" required>
+					<option value="">Select State</option>
+                    <option value="14" selected>Maharashtra</option>
+                </select>
+			</div>
+			<div class="col-md-6">
+				<label class="form-label">District <span class="text-danger">*</span></label>
+				<select class="form-select districtChange" name="authority_district" id="authority_district" required>
+					<option value="">Select District</option>
+                    <?php foreach ($districts as $district): ?>
+                        <option value="<?= htmlspecialchars($district['id']) ?>"><?= htmlspecialchars($district['name']) ?></option>
+                    <?php endforeach; ?>
+				</select>
+			</div>
+			<div class="col-md-6">
+				<label class="form-label">Taluka <span class="text-danger">*</span></label>
+				<select class="form-select talukaChange" name="authority_taluka" id="authority_taluka" required>
+					<option value="">Select Taluka</option>
+				</select>
+			</div>
+			<div class="col-md-6">
+				<label class="form-label">Village <span class="text-danger">*</span></label>
+				<select class="form-select villageChange" name="authority_village" id="authority_village" required>
+					<option value="">Select Village</option>
+				</select>
+			</div>
+            <div class="col-md-12">
+				<label class="form-label">Address <span class="text-danger">*</span></label>
+				<textarea class="form-control" name="authority_address" id="authority_address" rows="2" placeholder="Enter Address" required><?= htmlspecialchars($old['cafo_address'] ?? '') ?> </textarea>
+			</div>
 			
 			<!-- Divider -->
 			<hr class="my-4">
@@ -268,14 +343,14 @@ if (isset($_SESSION['success']) && !empty($_SESSION['success'])){
 				<label class="form-label">Full Name <span class="text-danger">*</span></label>
 				<input type="text" value="<?= htmlspecialchars($old['cafo_name'] ?? '') ?>" class="form-control" name="cafo_name" id="cafo_name" placeholder="Enter Full Name" required>
 			</div>
-			<div class="col-md-6">
+            <div class="col-md-6">
 				<label class="form-label">Email <span class="text-danger">*</span></label>
 				<div class="input-group">
-					<input type="email" value="<?= htmlspecialchars($old['cafo_email'] ?? '') ?>" class="form-control" id="cafo_email" value="" name="cafo_email" placeholder="Enter Email" required>
+					<input type="email" value="<?= htmlspecialchars($old['cafo_email'] ?? '') ?>" class="form-control" id="cafo_email" name="cafo_email" placeholder="Enter Cafo Email" required>
 					<button class="btn btn-outline-secondary" type="button" id="verifyEmailBtn">Verify</button>
 				</div>
 				<div class="input-group d-none email_verifcation_code" id="div_email_verifcation_code">
-					<input type="text" value="<?= htmlspecialchars($old['email_verifcation_code'] ?? '') ?>" class="form-control" id="email_verifcation_code" name="email_verifcation_code" placeholder="Enter Verification code" >
+					<input type="text" value="<?= htmlspecialchars($old['email_verifcation_code'] ?? '') ?>" class="form-control" id="cafo_email_verifcation_code" name="cafo_email_verifcation_code" placeholder="Enter Verification code" >
 					<button class="btn btn-outline-secondary" type="button" id="email_verifcation_button">Verify Code</button>
 				</div>
 			</div>
@@ -292,61 +367,18 @@ if (isset($_SESSION['success']) && !empty($_SESSION['success'])){
 			</div>
 			<div class="col-md-6">
 				<label class="form-label">Gender <span class="text-danger">*</span></label>
-				<select class="form-select" name="cafo_gender" id="cafo_gender" required>
+				<select class="form-select" name="cafo_gender" id="cafo_gender" >
 					<option value="">Select Gender</option>
 					<option value="M" <?= ($old['cafo_gender'] ?? '') == 'M' ? 'selected' : '' ?>>Male</option>
 					<option value="F" <?= ($old['cafo_gender'] ?? '') == 'F' ? 'selected' : '' ?>>Female</option>
 					<option value="O" <?= ($old['cafo_gender'] ?? '') == 'O' ? 'selected' : '' ?>>Other</option>
 				</select>
 			</div>
-			<div class="col-md-12">
-				<label class="form-label">Address <span class="text-danger">*</span></label>
-				<textarea class="form-control" name="cafo_address" id="cafo_address" rows="2" placeholder="Enter Address" required><?= htmlspecialchars($old['cafo_address'] ?? '') ?> </textarea>
-			</div>
 			<div class="col-md-6">
 				<label class="form-label">Aadhaar No <span class="text-danger">*</span></label>
-				<input type="text" class="form-control" value="<?= htmlspecialchars($old['aadhaar_no'] ?? '') ?>" name="aadhaar_no" id="aadhaar" maxlength="12" placeholder="Enter 12 digit Aadhaar" required>
+				<input type="text" class="form-control" value="<?= htmlspecialchars($old['aadhaar_no'] ?? '') ?>" name="cafo_aadhaar" id="aadhaar" maxlength="12" placeholder="Enter 12 digit Aadhaar" required>
                 <div id="aadhaarError" class="error"></div>
 			</div>
-			<div class="col-md-6">
-				<label class="form-label">PAN Card No <span class="text-danger">*</span></label>
-				<input type="text" class="form-control" value="<?= htmlspecialchars($old['pan_no'] ?? '') ?>" name="pan_no" id="pancard" maxlength="10" placeholder="Enter 10 character PAN" required>
-                <div id="panError" class="error"></div>
-			</div>
-			<div class="col-md-6">
-				<label class="form-label">GSTN </label>
-				<input type="text" class="form-control " value="<?= htmlspecialchars($old['gstn'] ?? '') ?>"  name="gstn" id="gstn" maxlength="16" placeholder="Enter 15 character GSTN" required>
-                <div id="gstnError" class="error"></div>
-			</div>
-			<div class="col-md-6">
-				<label class="form-label">State <span class="text-danger">*</span></label>
-				<select class="form-select stateChange" name="state" id="state" required>
-					<option value="">Select State</option>
-                    <option value="14" selected>Maharashtra</option>
-                </select>
-			</div>
-			<div class="col-md-6">
-				<label class="form-label">District <span class="text-danger">*</span></label>
-				<select class="form-select districtChange" name="district" id="district" required>
-					<option value="">Select District</option>
-                    <?php foreach ($districts as $district): ?>
-                        <option value="<?= htmlspecialchars($district['id']) ?>"><?= htmlspecialchars($district['name']) ?></option>
-                    <?php endforeach; ?>
-				</select>
-			</div>
-			<div class="col-md-6">
-				<label class="form-label">Taluka <span class="text-danger">*</span></label>
-				<select class="form-select talukaChange" name="taluka" id="taluka" required>
-					<option value="">Select Taluka</option>
-				</select>
-			</div>
-			<div class="col-md-6">
-				<label class="form-label">Village <span class="text-danger">*</span></label>
-				<select class="form-select villageChange" name="village" id="village" required>
-					<option value="">Select Village</option>
-				</select>
-			</div>
-
 			<div class="col-12 text-center">
 				<button type="submit" class="btn btn-primary px-4 py-2 register-button" >Register</button>
                 <button type="reset" class="btn btn-warning">Reset</button>
@@ -480,6 +512,17 @@ if (isset($_SESSION['success']) && !empty($_SESSION['success'])){
                 console.error('Fetch error:', err);
                 alert('Could not load villages. See console for details.');
             });
+        });
+
+        $('#department_id').on('change', function () {
+            const departmentId = $(this).val();
+            if (departmentId) {
+                $.get('dashboard/get-types.php?department_id=' + departmentId, function (data) {
+                $('#subdepartment_id').html(data);
+                });
+            } else {
+                $('#subdepartment_id').html('<option value="">-- Select Subdepartment --</option>');
+            }
         });
 
     });

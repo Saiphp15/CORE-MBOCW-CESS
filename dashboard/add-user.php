@@ -7,7 +7,19 @@ if (!isset($_SESSION['user_id'])) {
 require_once '../config/db.php';
 
 // Fetch required dropdown values
-$roles = $conn->query("SELECT id, name FROM roles")->fetch_all(MYSQLI_ASSOC);
+$loggedInRoleId = $_SESSION['user_role'] ?? 0; 
+$sql = "SELECT id, name FROM roles WHERE 1=1";
+if ($loggedInRoleId == 3) {
+    // If user role is 3 → show only 4,6,7
+    $sql .= " AND id IN (4,6,7)";
+} elseif ($loggedInRoleId == 7) {
+    // If user role is 7 → show only 4
+    $sql .= " AND id IN (4)";
+}
+
+// Fetch roles
+$roles = $conn->query($sql)->fetch_all(MYSQLI_ASSOC);
+//$roles = $conn->query("SELECT id, name FROM roles")->fetch_all(MYSQLI_ASSOC);
 $districts = $conn->query("SELECT id, name FROM districts")->fetch_all(MYSQLI_ASSOC);
 ?>
 <!DOCTYPE html>
@@ -69,8 +81,6 @@ scratch. This page gets rid of all links and provides the needed markup only.
                     <h3 class="card-title">Add User</h3>
                     <div class="card-tools">
                         <a href="users.php" class="btn btn-primary" ><i class="fas fa-eye"></i> User List</a> 
-                        <button type="button" class="btn btn-tool" data-card-widget="collapse" data-toggle="tooltip" title="Collapse"><i class="fas fa-minus"></i></button>
-                        <button type="button" class="btn btn-tool" data-card-widget="remove" data-toggle="tooltip" title="Remove"><i class="fas fa-times"></i></button>
                     </div>
                 </div>
                 <div class="card-body p-4">
@@ -132,7 +142,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>GSTN</label>
-                                            <input type="text" name="gstn" class="form-control" required>
+                                            <input type="text" name="gstn" class="form-control" >
                                         </div>
                                     </div>
                                     <div class="col-md-6">

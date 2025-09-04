@@ -30,7 +30,6 @@ $api = new Api($keyId, $keySecret);
 
 // Initialize statement variables to null to ensure they are always in scope for closing
 $employerCheckStmt = $employerInsertStmt = null;
-$localAuthorityCheckStmt = null;
 $projectCategoryCheckStmt = $projectTypeCheckStmt = null;
 $projectCheckStmt = $projectInsertStmt = null;
 $workOrderCheckStmt = $workOrderInsertStmt = null;
@@ -86,25 +85,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES['bulk_projects_invoice
         // 1. Check for existing employer
         $employerCheckStmt = $conn->prepare("SELECT id FROM employers WHERE email = ?");
         // 2. Insert new employer
-        $employerInsertStmt = $conn->prepare("INSERT INTO employers (employer_type, name, email, phone, gstn, created_by) VALUES (?, ?, ?, ?, ?, ?)");
-        // 3. Look up local authority ID from the name provided in the Excel sheet
-        $localAuthorityCheckStmt = $conn->prepare("SELECT id FROM local_authorities WHERE name = ?");
-        // 4. Look up project category and type IDs
-        $projectCategoryCheckStmt = $conn->prepare("SELECT id FROM project_categories WHERE name = ?");
-        $projectTypeCheckStmt = $conn->prepare("SELECT id FROM project_types WHERE name = ?");
+        $employerInsertStmt = $conn->prepare("INSERT INTO employers (name, pancard, created_at, created_by) VALUES (?, ?, NOW(), ?)");
+        
         // Check for existing project
         $projectCheckStmt = $conn->prepare("SELECT id, construction_cost FROM projects WHERE project_name = ?");
-        $projectInsertStmt = $conn->prepare("INSERT INTO projects (project_name, project_category_id, project_type_id, local_authority_id, construction_cost, project_start_date, project_end_date, cess_amount, status, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)");
+        $projectInsertStmt = $conn->prepare("INSERT INTO projects (project_code, project_name, local_authority_id, construction_cost, project_start_date, project_end_date, cess_amount, status, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?, NOW())");
         // 5. Insert new work order
         // Check for existing project_work_orders record
         $workOrderCheckStmt = $conn->prepare("SELECT id, work_order_amount FROM project_work_orders WHERE project_id = ? AND work_order_number = ?");
         $workOrderInsertStmt = $conn->prepare("INSERT INTO project_work_orders (project_id, work_order_number, work_order_date, work_order_amount, work_order_cess_amount, work_order_gst_cess_amount, work_order_administrative_cost, work_order_effective_cess_amount, employer_id, status, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', ?)");
         
         // 6. Bulk invoices history Insertion
-        $bulkProjectsInvoicesHistoryInsertStmt = $conn->prepare("INSERT INTO bulk_projects_invoices_history (effective_cess_amount, bulk_project_invoices_template_file, cess_payment_mode, is_payment_verified) VALUES (?, ?, ?, ?)");
+        $bulkProjectsInvoicesHistoryInsertStmt = $conn->prepare("INSERT INTO bulk_projects_invoices_history (effective_cess_amount, bulk_project_invoices_template_file, cess_payment_mode, is_payment_verified, created_by) VALUES (?, ?, ?, ?, ?)");
 
         // 7. Insert invoice cess payment history (This is the single, consolidated table as discussed)
-        $cessPaymentHistoryInsertStmt = $conn->prepare("INSERT INTO cess_payment_history (bulk_invoice_id, project_id, workorder_id, invoice_amount, cess_amount, gst_cess_amount, administrative_cost, effective_cess_amount, employer_id, cess_payment_mode, cess_receipt_file, payment_status, is_payment_verified, invoice_upload_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $cessPaymentHistoryInsertStmt = $conn->prepare("INSERT INTO cess_payment_history (bulk_invoice_id, project_id, workorder_id, invoice_amount, cess_amount, gst_cess_amount, administrative_cost, effective_cess_amount, employer_id, cess_payment_mode, cess_receipt_file, payment_status, is_payment_verified, invoice_upload_type, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
         // 8. Statements to check invoice totals and update status
         $totalInvoicedWorkOrderStmt = $conn->prepare("SELECT SUM(invoice_amount) AS total_invoiced FROM cess_payment_history WHERE workorder_id = ?");
@@ -114,16 +109,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES['bulk_projects_invoice
         $updateProjectStatusStmt = $conn->prepare("UPDATE projects SET status = 'Completed' WHERE id = ?");
 
         // Prepare statement for the new Razorpay transactions table
-        $razorpayTransactionInsertStmt = $conn->prepare("INSERT INTO razorpay_transactions (order_id, user_id, bulk_invoice_id, amount, status, request_data) VALUES (?, ?, ?, ?, ?, ?)");
+        $razorpayTransactionInsertStmt = $conn->prepare("INSERT INTO razorpay_transactions (order_id, user_id, bulk_invoice_id, amount, status, request_data, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)");
 
         // --- Bulk Project Invoices History Insertion ---
         // These values are from the form, not the Excel rows
         $templateTotalEffectiveCessAmount = isset($_POST['effective_cess_amount']) ? $_POST['effective_cess_amount'] : '';
         $bulkProjectsInvoicesTemplateFile = $newFileName;
         $cessPaymentMode = 1; // Assuming 'Online' is mode 1
-        $isPaymentVerified = 2; // Assuming 'Pending Verification' is mode 2
+        $isPaymentVerified = 2; // Assuming 'Pending Verification from admin' is mode 2
+        $createdBy = $_SESSION['user_id']; // Get the ID of the logged-in user
 
-        $bulkProjectsInvoicesHistoryInsertStmt->bind_param("dsii", $templateTotalEffectiveCessAmount, $bulkProjectsInvoicesTemplateFile, $cessPaymentMode, $isPaymentVerified);
+        $bulkProjectsInvoicesHistoryInsertStmt->bind_param("dsiii", $templateTotalEffectiveCessAmount, $bulkProjectsInvoicesTemplateFile, $cessPaymentMode, $isPaymentVerified, $createdBy);
         $bulkProjectsInvoicesHistoryInsertStmt->execute();
         $bulkInvoiceId = $bulkProjectsInvoicesHistoryInsertStmt->insert_id;
 
@@ -131,6 +127,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES['bulk_projects_invoice
         $rowCount = 0;
         $successfulInserts = 0;
         $errors = [];
+
+        //get local authority id from local_authorities_users based on logged in user id
+        $localAuthorityId = null;
+        $getLoggedInUserLocalAuthorityId = $conn->query("SELECT local_authority_id FROM local_authorities_users WHERE user_id = " . $createdBy . " LIMIT 1");
+        if ($getLoggedInUserLocalAuthorityId->num_rows > 0) {
+            $row = $getLoggedInUserLocalAuthorityId->fetch_assoc();
+            $localAuthorityId = $row['local_authority_id'];
+        }
 
         // Loop through each row of the worksheet, starting from the second row (skipping the header)
         for ($row = 2; $row <= $highestRow; ++$row) {
@@ -140,80 +144,50 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES['bulk_projects_invoice
                 // Get cell values from the row, ensuring type safety and handling nulls
                 // It's good practice to use getCalculatedValue() for formula support
                 $projectName = trim($worksheet->getCell('B' . $row)->getCalculatedValue() ?? '');
-                $projectCategoryName = trim($worksheet->getCell('C' . $row)->getCalculatedValue() ?? '');
-                $projectTypeName = trim($worksheet->getCell('D' . $row)->getCalculatedValue() ?? '');
-                $localAuthorityName = trim($worksheet->getCell('E' . $row)->getCalculatedValue() ?? '');
-                $constructionCost = floatval($worksheet->getCell('F' . $row)->getCalculatedValue() ?? 0.0);
+                $constructionCost = floatval($worksheet->getCell('C' . $row)->getCalculatedValue() ?? 0.0);
 
                 // Handle date conversion carefully
-                $projectStartDateValue = $worksheet->getCell('G' . $row)->getCalculatedValue();
+                $projectStartDateValue = $worksheet->getCell('D' . $row)->getCalculatedValue();
                 $projectStartDate = null;
                 if (!empty($projectStartDateValue)) {
                     $projectStartDate = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($projectStartDateValue)->format('Y-m-d');
                 }
 
-                $projectEndDateValue = $worksheet->getCell('H' . $row)->getCalculatedValue();
+                $projectEndDateValue = $worksheet->getCell('E' . $row)->getCalculatedValue();
                 $projectEndDate = null;
                 if (!empty($projectEndDateValue)) {
                     $projectEndDate = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($projectEndDateValue)->format('Y-m-d');
                 }
 
-                $workOrderNumber = trim($worksheet->getCell('I' . $row)->getCalculatedValue() ?? '');
-                $workOrderDateValue = $worksheet->getCell('J' . $row)->getCalculatedValue();
+                $workOrderNumber = trim($worksheet->getCell('F' . $row)->getCalculatedValue() ?? '');
+                $workOrderDateValue = $worksheet->getCell('G' . $row)->getCalculatedValue();
                 $workOrderDate = null;
                 if (!empty($workOrderDateValue)) {
                     $workOrderDate = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($workOrderDateValue)->format('Y-m-d');
                 }
-                $workOrderAmount = floatval($worksheet->getCell('K' . $row)->getCalculatedValue() ?? 0.0);
+                $workOrderAmount = floatval($worksheet->getCell('H' . $row)->getCalculatedValue() ?? 0.0);
                 
-                $invoiceAmount = floatval($worksheet->getCell('L' . $row)->getCalculatedValue() ?? 0.0);
-                $cessAmount = floatval($worksheet->getCell('M' . $row)->getCalculatedValue() ?? 0.0);
-                $gstCessAmount = floatval($worksheet->getCell('N' . $row)->getCalculatedValue() ?? 0.0);
-                $administrativeCost = floatval($worksheet->getCell('O' . $row)->getCalculatedValue() ?? 0.0);
-                $effectiveCessAmount = floatval($worksheet->getCell('P' . $row)->getCalculatedValue() ?? 0.0);
+                $invoiceAmount = floatval($worksheet->getCell('I' . $row)->getCalculatedValue() ?? 0.0);
+                $cessAmount = floatval($worksheet->getCell('J' . $row)->getCalculatedValue() ?? 0.0);
+                $administrativeCost = floatval($worksheet->getCell('K' . $row)->getCalculatedValue() ?? 0.0);
+                $effectiveCessAmount = floatval($worksheet->getCell('L' . $row)->getCalculatedValue() ?? 0.0);
 
-                $employerType = trim($worksheet->getCell('Q' . $row)->getCalculatedValue() ?? '');
-                $employerName = trim($worksheet->getCell('R' . $row)->getCalculatedValue() ?? '');
-                $employerEmail = trim($worksheet->getCell('S' . $row)->getCalculatedValue() ?? '');
-                $employerMobile = trim($worksheet->getCell('T' . $row)->getCalculatedValue() ?? '');
-                $employerGstn = trim($worksheet->getCell('U' . $row)->getCalculatedValue() ?? '');
-
+                $employerName = trim($worksheet->getCell('M' . $row)->getCalculatedValue() ?? '');
+                $employerPancard = trim($worksheet->getCell('N' . $row)->getCalculatedValue() ?? '');
+                
                 $cessPaymentMode = 1; // hardcoded as per business logic for bulk uploads
-                $createdBy = $_SESSION['user_id'];
                 
-                // Initialize IDs to null
+                
+                // --- 1. Employer Insertion/Lookup ---
                 $employerId = null;
-                $projectId = null;
-                $workOrderId = null;
-                $localAuthorityId = null;
-                $projectCategoryId = null;
-                $projectTypeId = null;
-                $projectConstructionCost = 0.0;
-                $workOrderTotalAmount = 0.0;
 
                 // --- VALIDATION CHECKS BEFORE PROCESSING ---
                 // Skip the row if required data is missing.
-                if (empty($employerType) || empty($employerEmail) || empty($employerName)) {
-                    $errors[] = "Row {$rowCount} skipped: Missing required employer information (Type, Email, Name).";
+                if (empty($employerName) || empty($employerPancard)) {
+                    $errors[] = "Row {$rowCount} skipped: Missing required employer information (Name, Pancard).";
                     continue; // Skip to the next row
                 }
-                if (empty($localAuthorityName)) {
-                     $errors[] = "Row {$rowCount} skipped: Missing local authority name.";
-                    continue;
-                }
-                if (empty($projectCategoryName)) {
-                    $errors[] = "Row {$rowCount} skipped: Missing project category name.";
-                    continue;
-                }
-                if (empty($projectTypeName)) {
-                    $errors[] = "Row {$rowCount} skipped: Missing project type name.";
-                    continue;
-                }
-                if (empty($projectName) || empty($workOrderNumber)) {
-                    $errors[] = "Row {$rowCount} skipped: Missing Project Name or Work Order Number.";
-                    continue;
-                }
-                // --- 1. Employer Insertion/Lookup ---
+
                 $employerCheckStmt->bind_param("s", $employerEmail);
                 $employerCheckStmt->execute();
                 $result = $employerCheckStmt->get_result();
@@ -221,46 +195,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES['bulk_projects_invoice
                     $employer = $result->fetch_assoc();
                     $employerId = $employer['id'];
                 } else {
-                    $employerInsertStmt->bind_param("sssssi", $employerType, $employerName, $employerEmail, $employerMobile, $employerGstn, $createdBy);
+                    $employerInsertStmt->bind_param("ssi", $employerName, $employerPancard, $createdBy);
                     $employerInsertStmt->execute();
                     $employerId = $employerInsertStmt->insert_id;
                 }
 
-                // --- 2. Local Authority Lookup ---
-                $localAuthorityCheckStmt->bind_param("s", $localAuthorityName);
-                $localAuthorityCheckStmt->execute();
-                $result = $localAuthorityCheckStmt->get_result();
-                if ($result->num_rows > 0) {
-                    $authority = $result->fetch_assoc();
-                    $localAuthorityId = $authority['id'];
-                } else {
-                    $errors[] = "Row {$rowCount} skipped: Local authority '{$localAuthorityName}' not found in database.";
-                    continue;
-                }
-
-                // --- 3. Project Category & Type Lookup ---
-                $projectCategoryCheckStmt->bind_param("s", $projectCategoryName);
-                $projectCategoryCheckStmt->execute();
-                $result = $projectCategoryCheckStmt->get_result();
-                if ($result->num_rows > 0) {
-                    $category = $result->fetch_assoc();
-                    $projectCategoryId = $category['id'];
-                } else {
-                    $errors[] = "Row {$rowCount} skipped: Project category '{$projectCategoryName}' not found in database.";
-                    continue;
-                }
-                $projectTypeCheckStmt->bind_param("s", $projectTypeName);
-                $projectTypeCheckStmt->execute();
-                $result = $projectTypeCheckStmt->get_result();
-                if ($result->num_rows > 0) {
-                    $type = $result->fetch_assoc();
-                    $projectTypeId = $type['id'];
-                } else {
-                    $errors[] = "Row {$rowCount} skipped: Project type '{$projectTypeName}' not found in database.";
-                    continue;
-                }
-
                 // --- 4. Project Lookup/Insertion ---
+                $projectId = null;
+                $project_code = 'PC' . str_pad($rowCount, 5, '0', STR_PAD_LEFT); // Example project code generation
+                $projectConstructionCost = 0.0;
+
                 $projectCheckStmt->bind_param("s", $projectName);
                 $projectCheckStmt->execute();
                 $result = $projectCheckStmt->get_result();
@@ -271,13 +215,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES['bulk_projects_invoice
                     $projectConstructionCost = $project['construction_cost'];
                 } else {
                     // Project does not exist, insert a new record
-                    $projectInsertStmt->bind_param("siiidssdi", $projectName, $projectCategoryId, $projectTypeId, $localAuthorityId, $constructionCost, $projectStartDate, $projectEndDate, $cessAmount, $createdBy);
+                    $projectInsertStmt->bind_param("ssidssdi", $project_code, $projectName, $localAuthorityId, $constructionCost, $projectStartDate, $projectEndDate, $cessAmount, $createdBy);
                     $projectInsertStmt->execute();
                     $projectId = $projectInsertStmt->insert_id;
                     $projectConstructionCost = $constructionCost;
                 }
                 
                 // --- 5. Work Order Insertion/Lookup & VALIDATION ---
+                $workOrderId = null;
+                $workOrderTotalAmount = 0.0;
+
                 $workOrderCheckStmt->bind_param("is", $projectId, $workOrderNumber);
                 $workOrderCheckStmt->execute();
                 $result = $workOrderCheckStmt->get_result();
@@ -292,7 +239,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES['bulk_projects_invoice
                     // NOTE: The calculation of cess amounts here seems to be a hardcoded business rule.
                     // If these percentages change, you'll need to update this code.
                     $workOrderCessAmount = $workOrderAmount * 0.01;
-                    $workOrderGstCessAmount = $workOrderCessAmount * 1.025; // This seems to be the Cess amount + GST on Cess (2.5%)
+                    $workOrderGstCessAmount = $workOrderCessAmount; // This seems to be the Cess amount + GST on Cess (2.5%)
                     $workOrderAdministrativeCost = $workOrderGstCessAmount * 0.01;
                     $workOrderEffectiveCessAmount = $workOrderGstCessAmount - $workOrderAdministrativeCost;
                     
@@ -303,7 +250,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES['bulk_projects_invoice
                 }
                 
                 // --- 6. Invoice Payment History Insertion ---
-                $cessReceiptFile = '';
                 $isPaymentVerified = 2; // default 2 until admin verifies payment received.
                 $paymentStatus = 'Pending';
                 
@@ -324,7 +270,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES['bulk_projects_invoice
                 } else {
                     // Invoice Cess Payment History Insertion ---
                     // This correctly inserts into the single `cess_payment_history` table as discussed previously.
-                    $cessPaymentHistoryInsertStmt->bind_param("iiidddddiissis", $bulkInvoiceId, $projectId, $workOrderId, $invoiceAmount, $cessAmount, $gstCessAmount, $administrativeCost, $effectiveCessAmount, $employerId, $cessPaymentMode, $cessReceiptFile, $paymentStatus, $isPaymentVerified, $invoiceUploadType);
+                    $cessPaymentHistoryInsertStmt->bind_param("iiidddddiissisi", $bulkInvoiceId, $projectId, $workOrderId, $invoiceAmount, $cessAmount, $gstCessAmount, $administrativeCost, $effectiveCessAmount, $employerId, $cessPaymentMode, $cessReceiptFile, $paymentStatus, $isPaymentVerified, $invoiceUploadType, $createdBy);
                     $cessPaymentHistoryInsertStmt->execute();
 
                     // Add the effective cess amount to our running total ---
@@ -396,7 +342,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES['bulk_projects_invoice
             // Log the order creation in the new table
             $orderId = $razorpayOrder['id'];
             $requestData = json_encode($orderData);
-            $razorpayTransactionInsertStmt->bind_param("siidss", $orderId, $_SESSION['user_id'], $bulkInvoiceId, $totalValidatedCessAmount, $razorpayOrder['status'], $requestData);
+            $razorpayTransactionInsertStmt->bind_param("siidssi", $orderId, $_SESSION['user_id'], $bulkInvoiceId, $totalValidatedCessAmount, $razorpayOrder['status'], $requestData, $createdBy);
             $razorpayTransactionInsertStmt->execute();
 
             // Commit the database transaction
@@ -459,9 +405,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES['bulk_projects_invoice
 // This ensures they are closed even if an exception occurs
 if ($employerCheckStmt) $employerCheckStmt->close();
 if ($employerInsertStmt) $employerInsertStmt->close();
-if ($localAuthorityCheckStmt) $localAuthorityCheckStmt->close();
-if ($projectCategoryCheckStmt) $projectCategoryCheckStmt->close();
-if ($projectTypeCheckStmt) $projectTypeCheckStmt->close();
 if ($projectCheckStmt) $projectCheckStmt->close();
 if ($projectInsertStmt) $projectInsertStmt->close();
 if ($workOrderCheckStmt) $workOrderCheckStmt->close();

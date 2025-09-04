@@ -7,7 +7,6 @@ if (!isset($_SESSION['user_id'])) {
 require_once '../config/db.php';
 
 $old_data = $_SESSION['old_data'] ?? [];
-
 ?>
 <!DOCTYPE html>
 <!--
@@ -68,8 +67,6 @@ scratch. This page gets rid of all links and provides the needed markup only.
                     <h3 class="card-title">Add Employer</h3>
                     <div class="card-tools">
                         <a href="employers.php" class="btn btn-primary" ><i class="fas fa-eye"></i> Employer List</a> 
-                        <button type="button" class="btn btn-tool" data-card-widget="collapse" data-toggle="tooltip" title="Collapse"><i class="fas fa-minus"></i></button>
-                        <button type="button" class="btn btn-tool" data-card-widget="remove" data-toggle="tooltip" title="Remove"><i class="fas fa-times"></i></button>
                     </div>
                 </div>
                 <div class="card-body p-4">
@@ -152,7 +149,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>GSTN</label>
-                                            <input type="text" name="gstn" value="<?php echo htmlspecialchars($old_data['gstn'] ?? ''); ?>" class="form-control" required>
+                                            <input type="text" name="gstn" value="<?php echo htmlspecialchars($old_data['gstn'] ?? ''); ?>" class="form-control" >
                                         </div>
                                     </div>
                                 </div>

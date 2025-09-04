@@ -129,8 +129,6 @@ scratch. This page gets rid of all links and provides the needed markup only.
                 <h3 class="card-title">Roles</h3>
                 <div class="card-tools">
                     <a href="add-role.php" class="btn btn-primary" ><i class="fas fa-plus"></i> Add Role</a> 
-                    <button type="button" class="btn btn-tool" data-card-widget="collapse" data-toggle="tooltip" title="Collapse"><i class="fas fa-minus"></i></button>
-                    <button type="button" class="btn btn-tool" data-card-widget="remove" data-toggle="tooltip" title="Remove"><i class="fas fa-times"></i></button>
                 </div>
             </div>
             <!-- /.card-header -->
