@@ -5,7 +5,7 @@ header("Access-Control-Allow-Origin: *");
 
 // Database connection
 require_once 'config/db.php';
-require_once 'common/helper.php';
+require_once 'common/emailVerification.php';
 
 
 $action = $_POST['action'] ? $_POST['action'] : "";
