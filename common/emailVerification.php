@@ -105,3 +105,59 @@ function generatePassword($length = 8, $letters = true, $numbers = true, $symbol
 
     return str_shuffle($password);
 }
+
+function sendForgotPassword($email,$name,$link)
+{
+    $mail = new PHPMailer(true);
+    try {
+        // Server settings
+        $mail->isSMTP();
+        $mail->Host       = 'smtp.gmail.com'; // Replace with your SMTP server
+        $mail->SMTPAuth   = true;
+        $mail->Username   = 'aaravprashantmane@gmail.com'; // Replace with your email
+        $mail->Password   = 'rpfbzhzfxomebmcq'; // Replace with your email password
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port       = 587;
+
+        // Recipients
+        $mail->setFrom('aaravprashantmane@gmail.com', 'MBOCW CESS Portal');
+        $mail->addAddress($email, $name);
+
+        // Content
+        $mail->isHTML(true);
+        $mail->Subject = 'Forgot Password:MBOCW CESS Portal!';
+        $mail->Body    = '
+                            <meta charset="utf-8" />
+                            <meta content="IE=edge" http-equiv="X-UA-Compatible" />
+                            <title></title>
+                            <link href="https://fonts.googleapis.com/css?family=Lato:900,900italic,700italic,700,400italic,400,300italic,300,100italic,100&amp;subset=latin,latin-ext" rel="stylesheet" type="text/css" />
+                            <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700" rel="stylesheet" type="text/css" />
+                            <style type="text/css">
+                                @import url("https://fonts.googleapis.com/css?family=Lato:900,900italic,700italic,700,400italic,400,300italic,300,100italic,100&subset=latin,latin-ext" rel="stylesheet" type="text/css");         
+                                @import url("https://fonts.googleapis.com/css?family=Montserrat:400,700" rel="stylesheet" type="text/css");
+                            </style>
+                            <div class="main-content-wrap" style="width:600px;margin:50px auto;color: #000;font-family: \'Lato\', sans-serif;font-size: 16px;font-weight: 400;line-height: 1.62857143;-webkit-font-smoothing: antialiased;">
+                                <div class="header">
+                                    <div class="logo" style="padding: 0px 0px 20px;text-align: center;border-bottom: 3px solid #FEAC0D;"><img src="../assets/img/logo-shield-UFSPsey2.png" class="img-circle elevation-2" alt="User Image"></div>
+                                </div>
+                                <div class="main-content" style="overflow: hidden;text-align: left;">
+                                    <div class="section-1" style="padding: 20px 0px;">
+                                        <p style="text-align: left;margin-top: 0px;">Hello <b>'.$name.'</b>,</p>
+                                        <p style="text-align: left;">We received a request to reset the password associated with your MBOCW CESS Portal account.</p>
+                                        <p style="text-align: left;">To reset your password, simply click the link below:</p>
+                                        <p style="text-align: left;"><a href="'.$link.'" style="color: #0186ba;" target="_blank">Change My Password</a></p>
+                                        <p style="text-align: left;">If you did not request this password reset, please disregard this email. Your account will remain secure, and no changes will be made.</p>
+                                        <p style="text-align: left;">For any concerns or assistance, feel free to contact our support team.</p>
+                                        <p style="text-align: left;">Thank you, <br />Team MBOCW CESS Portal</p>
+                                    </div>
+                                </div>
+                            </div>
+                        ';
+        // $mail->AltBody = 'Hello ' . htmlspecialchars($cafo_name) . ",\n\nWelcome! Your account has been created successfully. Your login details are:\nUsername: " . htmlspecialchars($cafo_email) . "\nPassword: 123456\n\nPlease log in and change your password as soon as possible for security reasons.\n\nThank you,\nThe MBOCW CESS Team";
+
+        $mail->send();
+    } catch (Exception $e) {
+        // Log the error but don't stop the registration process
+        error_log("Email sending failed. Mailer Error: {$mail->ErrorInfo}");
+    }
+}

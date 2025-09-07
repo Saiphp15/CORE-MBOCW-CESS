@@ -1,5 +1,31 @@
+
 <?php
 session_start();
+require_once './config/db.php';
+
+if (isset($_GET['token'])) {
+    $token = $_GET['token'];
+
+    // $sql = "SELECT email FROM users WHERE token = ?";
+    $stmt = $conn->prepare("SELECT * FROM users WHERE token = ?");
+    $stmt->bind_param("s", $token);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $user = $result->fetch_assoc();
+    $stmt->close();
+    if (!$user) {
+        $_SESSION['error'] = "Reset Password link expired.";
+        header("Location: forgot_password.php");
+        exit;
+    }
+
+} else {
+    $_SESSION['error'] = "Reset Password link expired.";
+    header("Location: forgot_password.php");
+    exit;
+}
+?>
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -7,7 +33,7 @@ session_start();
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MBOCWCESS Portal Login</title>
+  <title>MBOCWCESS Portal Reset Password</title>
   <link rel="icon" href="assets/img/favicon_io/favicon.ico" type="image/x-icon">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -123,22 +149,20 @@ session_start();
         <div class="alert alert-danger"><?php echo $_SESSION['error'];
                                         unset($_SESSION['error']); ?></div>
       <?php endif; ?>
-      <form action="auth.php" method="post">
-        <input type="email" name="email" placeholder="Email Address" required />
+      <form action="reset.php" method="post">
+        <input type="hidden" name="token" value="<?php echo htmlspecialchars($token); ?>">
+        <input type="hidden" name="email" value="<?php echo htmlspecialchars($user['email']); ?>">
         <input type="password" name="password" placeholder="Password" required />
-        <button type="submit">Log in</button>
+        <input type="password" name="confirm_password" placeholder="Confirm Password" required />
+        <!-- <input type="email" name="email" placeholder="Email Address" required /> -->
+        <button type="submit">Reset Password</button>
       </form>
       <br>
        <div class="row">
             <div class="col-6">
                 <p class="mb-1">
-                    <a href="forgot_password.php">I forgot my password</a>
+                    <a href="login.php">Login</a>
                 </p>
-            </div>
-            <div class="col-6">
-              <p class="mb-1">
-                <a href="index.php">Click here to Home Page</a>
-              </p>
             </div>
         </div>
       
