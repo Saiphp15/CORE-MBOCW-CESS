@@ -5,7 +5,6 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 require_once '../config/db.php';
-
 // Fetch required dropdown values
 $loggedInRoleId = $_SESSION['user_role'] ?? 0; 
 $sql = "SELECT id, name FROM roles WHERE 1=1";
