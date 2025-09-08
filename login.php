@@ -137,7 +137,7 @@ session_start();
       <div class="login-form">
         <div class="login-header">
           <img src="assets/img/mbocw-img.png" alt="Logo">
-          <h2>MBOCWCESS Portal</h2>
+          <h2>MBOCWB CESS Portal</h2>
         </div>
         <form action="auth.php" method="post">
           <div class="input-group mb-3">
