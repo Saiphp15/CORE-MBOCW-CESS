@@ -7,6 +7,9 @@
  * and securely inserts the new user's data into the database,
  * matching the provided column order.
  */
+// ini_set('display_errors', 1);
+// ini_set('display_startup_errors', 1);
+// error_reporting(E_ALL);
 
 session_start();
 if (!isset($_SESSION['user_id'])) {
@@ -21,6 +24,17 @@ require_once '../config/db.php';
 require_once '../vendor/autoload.php'; // Adjust the path if needed
 use PHPMailer\PHPMailer\PHPMailer;
 
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/../logs/php-error.log');
+error_reporting(E_ALL);
+
+$logFile = __DIR__ . "/../logs/error_log.txt";
+function logError($message) {
+    global $logFile;
+    $timestamp = date("Y-m-d H:i:s");
+    file_put_contents($logFile, "[$timestamp] $message\n", FILE_APPEND);
+}
+
 // Check if the form was submitted using the POST method.
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
@@ -33,8 +47,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $gender = trim($_POST['gender']);
     $state_id = filter_var($_POST['state_id'], FILTER_SANITIZE_NUMBER_INT);
     $district_id = filter_var($_POST['district_id'], FILTER_SANITIZE_NUMBER_INT);
-    $taluka_id = filter_var($_POST['taluka_id'], FILTER_SANITIZE_NUMBER_INT);
-    $village_id = filter_var($_POST['village_id'], FILTER_SANITIZE_NUMBER_INT);
+    $taluka_id = isset($_POST['taluka_id']) ? filter_var($_POST['taluka_id'], FILTER_SANITIZE_NUMBER_INT) : null;
+    $village_id = isset($_POST['village_id']) ? filter_var($_POST['village_id'], FILTER_SANITIZE_NUMBER_INT) : null;
     $address = trim($_POST['address']);
     $role_id = filter_var($_POST['role'], FILTER_SANITIZE_NUMBER_INT);
     $gstn = trim($_POST['gstn']);
@@ -54,6 +68,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Hash the password for secure storage in the database.
     $hashed_password = md5($password);
+    
 
     // --- 2. Database Insertion with Prepared Statements ---
     // Prepare the SQL statement to prevent SQL injection attacks.
@@ -74,8 +89,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         pancard, 
         aadhaar,
         is_active,
+        created_at,
         created_by
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?)";
     
     $stmt = $conn->prepare($sql);
 
@@ -87,7 +103,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Bind parameters to the prepared statement, ensuring order and data types match.
     // 's' for string, 'i' for integer.
-    $stmt->bind_param("sssisiiisissssii", 
+    $stmt->bind_param("sssssiiisissssii", 
         $name, 
         $email, 
         $hashed_password,
@@ -106,9 +122,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $created_by
     );
 
+    // echo '<pre>'; var_dump($stmt); exit;
+
     // Execute the statement and check for success.
     if ($stmt->execute()) {
-
+        
         $last_inserted_user_id = $conn->insert_id; // Get the ID of the newly inserted user
 
         //get local authority id from local_authorities_users based on logged in user id
@@ -121,7 +139,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         // Insert into local_authorities_users ---
-        $stmt = $conn->prepare("INSERT INTO local_authorities_users (local_authority_id, user_id, role, is_active, created_at) VALUES (?, ?, ?, 1, NOW())");
+        $stmt = $conn->prepare("INSERT INTO local_authorities_users (local_authority_id, user_id, role, is_active, created_at, created_by) VALUES (?, ?, ?, 1, NOW(),1)");
         $stmt->bind_param("iii", $local_authority_id, $last_inserted_user_id, $role_id);
         if (!$stmt->execute()) {
             $_SESSION['error'] = "Failed to link user to local authority: " . $stmt->error;
@@ -181,10 +199,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION['success'] .= " A welcome email has been sent.";
         } catch (Exception $e) {
             // Log the error but don't stop the script.
-            error_log("Message could not be sent. Mailer Error: {$mail->ErrorInfo}");
+            logError("Message could not be sent. Mailer Error: {$mail->ErrorInfo}");
             $_SESSION['error'] = "User added, but the welcome email could not be sent. Please check mailer settings.";
         }
     } else {
+        logError("Failed to add user: " . $stmt->error);
         $_SESSION['error'] = "Failed to add user: " . $stmt->error;
     }
 
