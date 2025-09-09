@@ -114,7 +114,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>Contact Number</label>
-                                            <input type="tel" name="phone" maxlength="10" class="form-control" required>
+                                            <input type="tel" name="phone" maxlength="10" class="form-control numeric" required>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
@@ -142,19 +142,19 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>GSTN</label>
-                                            <input type="text" name="gstn" class="form-control" >
+                                            <input type="text" name="gstn" class="form-control" maxlength="15" >
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>Pancard</label>
-                                            <input type="text" name="pancard" class="form-control" >
+                                            <input type="text" name="pancard" class="form-control" maxlength="10" >
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>Aadhaar</label>
-                                            <input type="text" name="aadhaar" class="form-control" >
+                                            <input type="text" name="aadhaar" class="form-control numeric" maxlength="12" >
                                         </div>
                                     </div>
                                 </div>
@@ -298,6 +298,10 @@ scratch. This page gets rid of all links and provides the needed markup only.
             const villages = await fetchData('fetch_data.php', `type=villages&id=${talukaId}`);
             populateDropdown(villageSelect, villages, 'Choose Village');
         }
+    });
+
+    $('.numeric').on('input', function(event) {
+        this.value = this.value.replace(/[^0-9]/g, '');
     });
 
 </script>
