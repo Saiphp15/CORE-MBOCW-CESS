@@ -7,6 +7,9 @@
  * and securely inserts the new user's data into the database,
  * matching the provided column order.
  */
+// ini_set('display_errors', 1);
+// ini_set('display_startup_errors', 1);
+// error_reporting(E_ALL);
 
 session_start();
 if (!isset($_SESSION['user_id'])) {
@@ -67,6 +70,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Hash the password for secure storage in the database.
     $hashed_password = md5($password);
+    
 
     // --- 2. Database Insertion with Prepared Statements ---
     // Prepare the SQL statement to prevent SQL injection attacks.
@@ -87,8 +91,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         pancard, 
         aadhaar,
         is_active,
+        created_at,
         created_by
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?)";
     
     $stmt = $conn->prepare($sql);
 
@@ -100,7 +105,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Bind parameters to the prepared statement, ensuring order and data types match.
     // 's' for string, 'i' for integer.
-    $stmt->bind_param("sssisiiisissssii", 
+    $stmt->bind_param("sssssiiisissssii", 
         $name, 
         $email, 
         $hashed_password,
@@ -119,9 +124,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $created_by
     );
 
+    // echo '<pre>'; var_dump($stmt); exit;
+
     // Execute the statement and check for success.
     if ($stmt->execute()) {
-
+        
         $last_inserted_user_id = $conn->insert_id; // Get the ID of the newly inserted user
 
         //get local authority id from local_authorities_users based on logged in user id
@@ -134,7 +141,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         // Insert into local_authorities_users ---
-        $stmt = $conn->prepare("INSERT INTO local_authorities_users (local_authority_id, user_id, role, is_active, created_at) VALUES (?, ?, ?, 1, NOW())");
+        $stmt = $conn->prepare("INSERT INTO local_authorities_users (local_authority_id, user_id, role, is_active, created_at, created_by) VALUES (?, ?, ?, 1, NOW(),1)");
         $stmt->bind_param("iii", $local_authority_id, $last_inserted_user_id, $role_id);
         if (!$stmt->execute()) {
             $_SESSION['error'] = "Failed to link user to local authority: " . $stmt->error;
