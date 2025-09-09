@@ -120,12 +120,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $checkStmt->close();
 
+        $loggedInUserId = $_SESSION['user_id'] ?? 0;
+
         // Insert new employer
-        $sql = "INSERT INTO `employers` (`employer_type`, `name`, `email`, `phone`, `pancard`, `aadhaar`, `gstn`, `pancard_path`, `aadhaar_path`, `is_active`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO `employers` (`employer_type`, `name`, `email`, `phone`, `pancard`, `aadhaar`, `gstn`, `pancard_path`, `aadhaar_path`, `is_active`, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = $conn->prepare($sql);
 
         // Bind parameters. The 's' in "sssssssi" stands for string. The last 'i' is for integer (is_active).
-        $stmt->bind_param("sssssssssi", $employer_type, $name, $email, $phone, $pancard, $aadhaar, $gstn, $pan_path, $aadhaar_path, $is_active);
+        $stmt->bind_param("sssssssssii", $employer_type, $name, $email, $phone, $pancard, $aadhaar, $gstn, $pan_path, $aadhaar_path, $is_active, $loggedInUserId);
 
         if ($stmt->execute()) {
             $conn->commit();

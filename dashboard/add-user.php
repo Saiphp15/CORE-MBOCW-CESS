@@ -5,6 +5,7 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 require_once '../config/db.php';
+
 // Fetch required dropdown values
 $loggedInRoleId = $_SESSION['user_role'] ?? 0; 
 $sql = "SELECT id, name FROM roles WHERE 1=1";
@@ -113,7 +114,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>Contact Number</label>
-                                            <input type="tel" name="phone" class="form-control" required>
+                                            <input type="tel" name="phone" maxlength="10" class="form-control" required>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
@@ -147,13 +148,13 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>Pancard</label>
-                                            <input type="text" name="pancard" class="form-control" required>
+                                            <input type="text" name="pancard" class="form-control" >
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>Aadhaar</label>
-                                            <input type="text" name="aadhaar" class="form-control" required>
+                                            <input type="text" name="aadhaar" class="form-control" >
                                         </div>
                                     </div>
                                 </div>

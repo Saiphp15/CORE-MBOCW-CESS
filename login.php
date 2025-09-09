@@ -141,6 +141,10 @@ session_start();
           <img src="assets/img/mbocw-img.png" alt="Logo">
           <h2>MBOCWB CESS Portal</h2>
         </div>
+        <?php if (isset($_SESSION['error'])): ?>
+            <div class="alert alert-danger"><?php echo $_SESSION['error']; ?></div>
+            <?php unset($_SESSION['error']); ?>
+        <?php endif; ?>
         <form action="auth.php" method="post">
           <div class="input-group mb-3">
             <span class="input-group-text"><i class="bi bi-envelope"></i></span>
@@ -153,7 +157,7 @@ session_start();
           <button type="submit" class="btn-login">Log in</button>
         </form>
         <div class="extra-links">
-          <a href="forgot-password.php">Forgot your password?</a><br><br>
+          <a href="forgot_password.php">Forgot your password?</a><br><br>
           <a href="index.php">Back to Home</a>
         </div>
       </div>

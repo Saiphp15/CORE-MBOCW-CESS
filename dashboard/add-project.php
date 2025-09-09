@@ -7,7 +7,7 @@ if (!isset($_SESSION['user_id'])) {
 require_once '../config/db.php';
 
 // Fetch required dropdown values
-$users = $conn->query("SELECT id, name FROM users")->fetch_all(MYSQLI_ASSOC);
+$users = $conn->query("SELECT id, name, role FROM users")->fetch_all(MYSQLI_ASSOC);
 $employers = $conn->query("SELECT id, name FROM employers")->fetch_all(MYSQLI_ASSOC);
 $districts = $conn->query("SELECT id, name FROM districts")->fetch_all(MYSQLI_ASSOC);
 ?>
@@ -198,27 +198,36 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                                 <label>Managers</label>
                                                 <select name="work_order_manager_id[]" class="form-control">
                                                     <option value="">Choose Manager</option>
-                                                    <?php foreach ($users as $user): ?>
+                                                    <?php 
+                                                    foreach ($users as $user): 
+                                                        if($user['role'] == 6){
+                                                    ?>
                                                     <option value="<?= $user['id'] ?>"><?= $user['name'] ?></option>
-                                                    <?php endforeach; ?>
+                                                    <?php } endforeach; ?>
                                                 </select>
                                             </div>
                                             <div class="col-md-6">
                                                 <label>Engineers</label>
                                                 <select name="work_order_engineer_id[]" class="form-control">
                                                     <option value="">Choose Engineer</option>
-                                                    <?php foreach ($users as $user): ?>
+                                                    <?php 
+                                                    foreach ($users as $user): 
+                                                        if($user['role'] == 7){
+                                                    ?>
                                                     <option value="<?= $user['id'] ?>"><?= $user['name'] ?></option>
-                                                    <?php endforeach; ?>
+                                                    <?php } endforeach; ?>
                                                 </select>
                                             </div>
                                             <div class="col-md-6">
                                                 <label>Employer</label>
                                                 <select name="work_order_employer_id[]" class="form-control">
                                                     <option value="">Choose Employer</option>
-                                                    <?php foreach ($employers as $employee): ?>
+                                                    <?php 
+                                                    foreach ($employers as $employee): 
+                                                        if($user['role'] == 4){
+                                                    ?>
                                                     <option value="<?= $employee['id'] ?>"><?= $employee['name'] ?></option>
-                                                    <?php endforeach; ?>
+                                                    <?php } endforeach; ?>
                                                 </select>
                                             </div>
                                             <div class="col-md-12">

@@ -129,22 +129,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $conn->begin_transaction();
 
+        $loggedInUserId = $_SESSION['user_id'] ?? 0;
+
         // Insert into local_authorities
         $sql = "INSERT INTO local_authorities 
                 (name, type_id, authority_department_id, authority_subdepartment_id, 
                  state_id, district_id, taluka_id, village_id, address, 
                  pancard, pancard_path, aadhaar, aadhaar_path, gstn, 
-                 is_active, created_at, updated_at) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, NOW(), NOW())";
+                 is_active, created_at, created_by) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, NOW(), ?)";
 
         $stmt = $conn->prepare($sql);
         if (!$stmt) throw new Exception("Prepare failed: " . $conn->error);
 
         $stmt->bind_param(
-            "siiiiiiissssss",
+            "siiiiiiisssssi",
             $name, $type_id, $dept_id, $subdept_id,
             $state_id, $district_id, $taluka_id, $village_id,
-            $address, $pancard, $panPath, $aadhaar, $aadhaarPath, $gstn
+            $address, $pancard, $panPath, $aadhaar, $aadhaarPath, $gstn, $loggedInUserId
         );
 
         if (!$stmt->execute()) {

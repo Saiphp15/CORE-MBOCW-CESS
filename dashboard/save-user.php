@@ -21,6 +21,17 @@ require_once '../config/db.php';
 require_once '../vendor/autoload.php'; // Adjust the path if needed
 use PHPMailer\PHPMailer\PHPMailer;
 
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/../logs/php-error.log');
+error_reporting(E_ALL);
+
+$logFile = __DIR__ . "/../logs/error_log.txt";
+function logError($message) {
+    global $logFile;
+    $timestamp = date("Y-m-d H:i:s");
+    file_put_contents($logFile, "[$timestamp] $message\n", FILE_APPEND);
+}
+
 // Check if the form was submitted using the POST method.
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
@@ -31,10 +42,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $password = '123456'; // Default password for new users
     $phone = trim($_POST['phone']);
     $gender = trim($_POST['gender']);
-    $state_id = filter_var($_POST['state_id'], FILTER_SANITIZE_NUMBER_INT);
-    $district_id = filter_var($_POST['district_id'], FILTER_SANITIZE_NUMBER_INT);
-    $taluka_id = filter_var($_POST['taluka_id'], FILTER_SANITIZE_NUMBER_INT);
-    $village_id = filter_var($_POST['village_id'], FILTER_SANITIZE_NUMBER_INT);
+
+    $state_id    = isset($_POST['state_id'])    ? filter_var($_POST['state_id'], FILTER_SANITIZE_NUMBER_INT)    : 0;
+    $district_id = isset($_POST['district_id']) ? filter_var($_POST['district_id'], FILTER_SANITIZE_NUMBER_INT) : 0;
+    $taluka_id   = isset($_POST['taluka_id'])   ? filter_var($_POST['taluka_id'], FILTER_SANITIZE_NUMBER_INT)   : 0;
+    $village_id  = isset($_POST['village_id'])  ? filter_var($_POST['village_id'], FILTER_SANITIZE_NUMBER_INT)  : 0;
+
     $address = trim($_POST['address']);
     $role_id = filter_var($_POST['role'], FILTER_SANITIZE_NUMBER_INT);
     $gstn = trim($_POST['gstn']);
@@ -181,10 +194,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION['success'] .= " A welcome email has been sent.";
         } catch (Exception $e) {
             // Log the error but don't stop the script.
-            error_log("Message could not be sent. Mailer Error: {$mail->ErrorInfo}");
+            logError("Message could not be sent. Mailer Error: {$mail->ErrorInfo}");
             $_SESSION['error'] = "User added, but the welcome email could not be sent. Please check mailer settings.";
         }
     } else {
+        logError("Failed to add user: " . $stmt->error);
         $_SESSION['error'] = "Failed to add user: " . $stmt->error;
     }
 
