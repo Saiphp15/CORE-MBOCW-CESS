@@ -1,4 +1,51 @@
 <?php
+session_start();
+if (!isset($_SESSION['user_id'])) {
+    // If the user is not logged in, redirect them to the login page.
+    header("Location: ../login.php");
+    exit;
+}
+
+// Include the database configuration file to establish a connection.
+require_once '../config/db.php';
+
+// Get invoice id
+if (!isset($_GET['id']) || empty($_GET['id'])) {
+    $_SESSION['error'] = "Invalid request!";
+    header("Location: bulk-invoices-history.php"); // redirect to list
+    exit;
+}
+
+$id = intval($_GET['id']);
+$stmt = $conn->prepare("
+SELECT 
+bpih.id, 
+bpih.bulk_project_invoices_template_file, 
+bpih.cess_payment_mode,
+bpih.is_payment_verified,
+bpih.rejection_reason,
+rt.order_id ,
+rt.payment_id,
+rt.amount,
+rt.status,
+rt.created_at as payment_date 
+FROM bulk_projects_invoices_history bpih
+LEFT JOIN razorpay_transactions rt ON bpih.id = rt.bulk_invoice_id 
+WHERE bpih.id = ?
+");
+$stmt->bind_param("i", $id);
+$stmt->execute();
+$result = $stmt->get_result();
+$invoice = $result->fetch_assoc();
+
+if (!$invoice) {
+    $_SESSION['error'] = "Invoice not found!";
+    header("Location: bulk-invoices-history.php");
+    exit;
+}
+
+$paymentMode = $invoice['cess_payment_mode'] == 1 ? 'Net Banking' : ($invoice['cess_payment_mode'] == 2 ? 'Challan' : 'Unknown');
+
 // Include the TCPDF library
 require_once '../vendor/tecnickcom/tcpdf/tcpdf.php'; 
 // require __DIR__ . '/../vendor/autoload.php';
@@ -10,7 +57,7 @@ $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8',
 
 // Set document information
 $pdf->SetCreator(PDF_CREATOR);
-$pdf->SetAuthor('Your Name');
+$pdf->SetAuthor('MBOCW CESS');
 $pdf->SetTitle('Payment Receipt');
 $pdf->SetSubject('Payment Receipt');
 
@@ -46,31 +93,15 @@ $html = '
                 <td class="value">' . date("Y-m-d H:i:s") . '</td>
             </tr>
         </table>
-        <div class="section-title">Project Details</div>
+        <div class="section-title">Bulk Invoice Details</div>
         <table>
             <tr>
-                <td class="label">Project Name:</td>
-                <td class="value">Test</td>
+                <td class="label">Amount:</td>
+                <td class="value">'. htmlspecialchars($invoice['amount']). '</td>
             </tr>
             <tr>
-                <td class="label">Project ID:</td>
-                <td class="value">CIDURBPWD1797758</td>
-            </tr>
-            <tr>
-                <td class="label">Implementing Agency Name:</td>
-                <td class="value">Demo</td>
-            </tr>
-            <tr>
-                <td class="label">Department Name:</td>
-                <td class="value">Housing</td>
-            </tr>
-            <tr>
-                <td class="label">District:</td>
-                <td class="value">Thane</td>
-            </tr>
-            <tr>
-                <td class="label">Total Cess Paid:</td>
-                <td class="value">XXX</td>
+                <td class="label">Payment Mode:</td>
+                <td class="value">'. htmlspecialchars($paymentMode). '</td>
             </tr>
             <tr>
                 <td class="label">Challan No/ Net Banking:</td>
@@ -78,31 +109,25 @@ $html = '
             </tr>
             <tr>
                 <td class="label">Chq./Ref.No./UTR No/Payment ID:</td>
-                <td class="value">XXXXXXXX</td>
-            </tr>
-            <tr>
-                <td class="label">Mode of Payment:</td>
-                <td class="value">Challan / Net Banking</td>
+                <td class="value">'. htmlspecialchars($invoice['payment_id']). '</td>
             </tr>
             <tr>
                 <td class="label">Payment Date:</td>
-                <td class="value">Track Date Time of the Payment Made</td>
+                <td class="value">'. htmlspecialchars($invoice['payment_date']). '</td>
             </tr>
         </table>
         <div class="section-title">Payment Details</div>
         <table>
             <tr>
                 <td class="label">Payment Status:</td>
-                <td class="value">Complete/Success</td>
+                <td class="value">'. htmlspecialchars($invoice['status']). '</td>
             </tr>
             <tr>
                 <td class="label">Receipt ID:</td>
                 <td class="value">CID/TH/PU/PC660070/2024</td>
             </tr>
         </table>
-        <div class="footer">
-            <p>Scan QR code to verify details of Payment Receipt</p>
-        </div>
+        <div class="footer"></div>
     </div>';
 
 // Output the HTML content
