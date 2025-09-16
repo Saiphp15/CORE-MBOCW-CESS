@@ -330,6 +330,10 @@ scratch. This page gets rid of all links and provides the needed markup only.
                 populateDropdown(villageSelect, villages, 'Choose Village');
             }
         });
+
+        $('.numeric').on('input', function(event) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
     </script>
 </body>
 </html>

@@ -183,6 +183,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
                             </div>
 
                             <h3>Work Order Details</h3>
+                            
                             <?php if (!empty($work_orders)): ?>
                                 <?php foreach ($work_orders as $index => $wo):
                                     // Fetch names for work order details
@@ -204,8 +205,14 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                         $wo_employer_name = $conn->query("SELECT name FROM employers WHERE id = " . $wo['work_order_employer_id'])->fetch_assoc()['name'] ?? 'N/A';
                                     }
                                 ?>
+                                
                                 <div class="work-order-section border p-3 mb-3">
+                                   
                                     <div class="row">
+                                        <div class="col-md-12 d-flex justify-content-end">
+                                            <a href="raise-invoice.php?id=<?= $wo['id'] ?>" class="btn btn-primary"><i class="fas fa-eye"></i> Raise Invoice</a> 
+                                            <a href="view-invoice.php?id=<?= $wo['id'] ?>" class="btn btn-warning ms-2"><i class="fas fa-edit"></i> View Invoice</a>
+                                        </div>
                                         <div class="col-md-6">
                                             <p><strong>Work Order Number:</strong> <?= htmlspecialchars($wo['work_order_number']) ?></p>
                                         </div>
