@@ -49,6 +49,5 @@
             <a href="logout.php" class="dropdown-item dropdown-footer"><i class="nav-icon fas fa-sign-out-alt"></i> Logout</a>
           </div>
         </li>
-
     </ul>
   </nav>
