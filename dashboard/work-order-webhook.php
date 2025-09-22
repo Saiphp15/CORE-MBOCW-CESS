@@ -55,7 +55,7 @@ try {
 
     try {
         // Prepare statements for updating tables
-        $updateRazorpayStmt = $conn->prepare("UPDATE razorpay_transactions SET payment_id = ?, signature = ?, status = 'paid', response_data = ? WHERE order_id = ?");
+        $updateRazorpayStmt = $conn->prepare("UPDATE razorpay_transactions SET payment_id = ?, signature = ?, status = 'paid', response_data = ?, workorder_id = ? WHERE order_id = ?");
         // $updateBulkHistoryStmt = $conn->prepare("UPDATE bulk_projects_invoices_history SET is_payment_verified = 2 WHERE id = ?"); // 1 for Verified, 2 for pending intill admin verifies
         $updateCessHistoryStmt = $conn->prepare("UPDATE cess_payment_history SET payment_status = 'Paid', is_payment_verified = 2 WHERE workorder_id = ? AND payment_status = 'Pending'"); 
 
@@ -73,7 +73,7 @@ try {
         
         // Update razorpay_transactions table
         $responseData = json_encode($data);
-        $updateRazorpayStmt->bind_param("ssss", $razorpayPaymentId, $razorpaySignature, $responseData, $razorpayOrderId);
+        $updateRazorpayStmt->bind_param("sssis", $razorpayPaymentId, $razorpaySignature, $responseData, $workOrderId, $razorpayOrderId);
         $updateRazorpayStmt->execute();
 
 

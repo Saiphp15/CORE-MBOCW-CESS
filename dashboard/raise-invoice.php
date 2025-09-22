@@ -114,7 +114,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
                     </div>
                     <br /><br />
                     <button type="submit" class="btn btn-info">Save</button>
-                    <a href="roles.php" class="btn btn-default ml-2">Cancel</a>
+                    <a href="projects.php" class="btn btn-default ml-2">Cancel</a>
                   </form>
                 </div>
               </div>
