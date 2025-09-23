@@ -89,9 +89,8 @@ try {
         $conn->rollback();
         // Log the internal error
         error_log("Internal Server Error: " . $e->getMessage());
-        print_r($e->getMessage());
-        print_r($e->getLine());
-        die;
+        // print_r($e->getMessage());
+        // print_r($e->getLine()); die;
         echo json_encode(['status' => 'error', 'message' => 'An internal server error occurred during verification.']);
     }
 
