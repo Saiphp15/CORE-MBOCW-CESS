@@ -19,19 +19,20 @@ header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
+    $project_id = intval($_POST['project_id']) ;
     $workorder_id = intval($_POST['workorder_id']) ;
     $amount = trim($_POST['amount'] ?? '');
     $payment_type = trim($_POST['payment_type'] ?? '');
-    // echo "<pre>";
-    // var_dump($workorder_id,$amount, $payment_type);die;
+    
     // Basic validation
     if (empty($workorder_id) || empty($amount) || empty($payment_type)) {
         $_SESSION['error'] = "Please fill in all required fields (Amount, Payment type).";
-        header("Location: projects.php");
-        exit;
+        header("Location: raise-workorder-invoice.php?workorder_id=$workorder_id&project_id=$project_id"); exit;
     }
 
     try {
+        $conn->begin_transaction();
+
         $checkStmt = $conn->prepare("SELECT * FROM project_work_orders WHERE id = ?");
         $checkStmt->bind_param("i", $workorder_id);
         $checkStmt->execute();
@@ -40,8 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($result->num_rows === 0) {
             $conn->rollback();
             $_SESSION['error'] = "Work order not found.";
-            header("Location: projects.php");
-            exit;
+            header("Location: raise-workorder-invoice.php?workorder_id=$workorder_id&project_id=$project_id"); exit;
         }
         $checkStmt->close();
         $workOrderData = $result->fetch_assoc();
@@ -62,8 +62,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $cessPaymentHistoryInsertStmt = $conn->prepare("INSERT INTO cess_payment_history (project_id, workorder_id, invoice_amount, cess_amount, gst_cess_amount, administrative_cost, effective_cess_amount, employer_id, cess_payment_mode, cess_receipt_file, payment_status, is_payment_verified, invoice_upload_type, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         $cessPaymentHistoryInsertStmt->bind_param("iidddddiissisi",$projectId, $workorder_id, $amount, $cessAmount, $gstCessAmount, $administrativeCost, $effectiveCessAmount, $employerId, $cessPaymentMode, $cessReceiptFile, $paymentStatus, $isPaymentVerified, $invoiceUploadType, $createdBy);
         $cessPaymentHistoryInsertStmt->execute();
-        $amountInPaisa = $amount * 100;
-        $orderData = [
+        if ($cessPaymentHistoryInsertStmt->execute()) {
+            $amountInPaisa = $amount * 100;
+            $orderData = [
                 'amount' => $amountInPaisa,
                 'payment_capture' => 1,
                 'currency' => 'INR',
@@ -101,25 +102,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ];
 
             // Set the success message to be displayed after payment
-            $_SESSION['success'] = "Successfully uploaded and saved {$successfulInserts} projects. Redirecting to payment page...";
-            header("Location: work-order-payment.php");
-            exit();
-        // $insertPaymentStmt = $conn->prepare(
-        //     "INSERT INTO work_order_payments (workorder_id, amount, payment_type, created_at) VALUES (?, ?, ?, NOW())"
-        // );
-        // $insertPaymentStmt->bind_param("ids", $workorder_id, $amount, $payment_type);
-
-        // if (!$insertPaymentStmt->execute()) {
-        //     throw new mysqli_sql_exception("Failed to insert payment record.");
-        // }
-        
-        // $insertPaymentStmt->close();
-
-        $conn->commit();
-        $_SESSION['success'] .= " Payment is capture.";
-        header("Location: projects.php");
-        exit;
-
+            $_SESSION['success'] = "Invoice Raised Successfully.";
+            header("Location: view-workorder-invoices.php?workorder_id=$workorder_id"); exit();
+        }else {
+            $conn->rollback();
+            $_SESSION['error'] = "Failed to save cess invoice history and razorpay transaction. Please try again.";
+            header("Location: raise-workorder-invoice.php?workorder_id=$workorder_id&project_id=$project_id"); exit;
+        }
     } catch (mysqli_sql_exception $e) {
         $conn->rollback();
         echo json_encode(['status' => 'error', 'message' => 'Database error: ' . $e->getMessage(), 'code' => $e->getLine()]);

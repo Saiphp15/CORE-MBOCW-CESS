@@ -6,19 +6,17 @@ if (!isset($_SESSION['user_id'])) {
 }
 require_once '../config/db.php';
 
-// Get project ID
-if (!isset($_GET['id']) || empty($_GET['id'])) {
-  $_SESSION['error'] = "Invalid project ID.";
-  header("Location: projects.php");
-  exit;
+// check workorder and project ID
+$project_id = intval($_GET['project_id']);
+$workorder_id = intval($_GET['workorder_id']);
+if (!isset($_GET['workorder_id']) || empty($_GET['workorder_id'])) {
+  $_SESSION['error'] = "Invalid Workorder ID.";
+  header("Location: view-project.php?id=".$project_id); exit;
 }
-$workorder_id = intval($_GET['id']);
 
-// Redirect if project not found
-if (!$workorder_id) {
-  $_SESSION['error'] = "Work Order not found.";
-  header("Location: projects.php");
-  exit;
+if (!isset($_GET['project_id']) || empty($_GET['project_id'])) {
+  $_SESSION['error'] = "Invalid Project ID.";
+  header(header: "Location: view-project.php?id=".$project_id); exit;
 }
 
 ?>
@@ -34,7 +32,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
 
-  <title>Medical POS System Desk | Raise Invoice</title>
+  <title>MMBOCWCESS Portal | Raise Invoice</title>
   <link rel="icon" href="../assets/img/favicon_io/favicon.ico" type="image/x-icon">
 
   <!-- Font Awesome Icons -->
@@ -99,8 +97,9 @@ scratch. This page gets rid of all links and provides the needed markup only.
                     <div class="col-md-6">
                       <div class="form-group">
                         <label for="name" class="form-label">Amount</label>
-                        <input type="hidden" class="form-control" id="workorder_id" name="workorder_id" value="<?= $workorder_id ?>" required>
-                        <input type="text" class="form-control numeric" id="amount" name="amount" value="" required>
+                        <input type="hidden" name="project_id" value="<?= $project_id ?>">
+                        <input type="hidden" name="workorder_id" value="<?= $workorder_id ?>">
+                        <input type="text" class="form-control numeric" id="amount" name="amount" placeholder="Enter Invoice Amount" required>
                       </div>
                     </div>
                     <div class="col-md-6">
@@ -113,8 +112,8 @@ scratch. This page gets rid of all links and provides the needed markup only.
                       </div>
                     </div>
                     <br /><br />
-                    <button type="submit" class="btn btn-info">Save</button>
-                    <a href="roles.php" class="btn btn-default ml-2">Cancel</a>
+                    <button type="submit" class="btn btn-success">Submit</button>
+                    <a href="view-project.php?id=<?= $_GET['project_id']; ?>" class="btn btn-default ml-2">Cancel</a>
                   </form>
                 </div>
               </div>

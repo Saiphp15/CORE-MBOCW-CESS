@@ -44,7 +44,7 @@ $errorMessage = isset($_GET['error']) ? htmlspecialchars($_GET['error']) : 'An u
             </div>
 
             <!-- Retry Payment Button -->
-            <a href="projects.php" class="mt-6 w-full inline-block px-6 py-3 bg-red-500 text-white font-bold rounded-full transition duration-300 hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50">
+            <a href="view-workorder-invoices.php" class="mt-6 w-full inline-block px-6 py-3 bg-red-500 text-white font-bold rounded-full transition duration-300 hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50">
                 Try Again
             </a>
         </div>

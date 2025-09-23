@@ -45,8 +45,8 @@ $paymentId = isset($_GET['payment_id']) ? htmlspecialchars($_GET['payment_id']) 
             </div>
 
             <!-- Back to Dashboard/Home Button -->
-            <a href="projects.php" class="mt-6 w-full inline-block px-6 py-3 bg-green-500 text-white font-bold rounded-full transition duration-300 hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50">
-                Go to Bulk Invoice History
+            <a href="view-workorder-invoices.php" class="mt-6 w-full inline-block px-6 py-3 bg-green-500 text-white font-bold rounded-full transition duration-300 hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50">
+                Go to Invoice History
             </a>
         </div>
     </div>

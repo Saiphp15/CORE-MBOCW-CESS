@@ -210,8 +210,8 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                    
                                     <div class="row">
                                         <div class="col-md-12 d-flex justify-content-end">
-                                            <a href="raise-invoice.php?id=<?= $wo['id'] ?>" class="btn btn-primary"><i class="fas fa-eye"></i> Raise Invoice</a> 
-                                            <a href="view-invoice.php?id=<?= $wo['id'] ?>" class="btn btn-warning ms-2"><i class="fas fa-edit"></i> View Invoice</a>
+                                            <a href="raise-workorder-invoice.php?workorder_id=<?= $wo['id'] ?>&project_id=<?= $_GET['id']; ?>" class="btn btn-primary"><i class="fas fa-eye"></i> Raise Invoice</a> 
+                                            <a href="view-workorder-invoices.php?workorder_id=<?= $wo['id'] ?>" class="btn btn-warning ms-2"><i class="fas fa-edit"></i> View Invoice</a>
                                         </div>
                                         <div class="col-md-6">
                                             <p><strong>Work Order Number:</strong> <?= htmlspecialchars($wo['work_order_number']) ?></p>

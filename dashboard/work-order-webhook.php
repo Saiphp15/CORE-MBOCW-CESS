@@ -68,7 +68,7 @@ try {
         $workOrderId = $transaction['request_data'] ? json_decode($transaction['request_data'], true)['notes']['workorder_id'] : null;
 
         if (!$workOrderId) {
-            throw new \Exception("Bulk invoice ID not found for this order.");
+            throw new \Exception("Workorder ID not found for this order.");
         }
         
         // Update razorpay_transactions table
