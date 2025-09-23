@@ -102,7 +102,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Set the success message to be displayed after payment
             $_SESSION['success'] = "Invoice Raised Successfully.";
-            header("Location: view-workorder-invoices.php?project_id=$project_id&workorder_id=$workorder_id"); exit();
+            $_SESSION['project_id'] = $project_id;
+            $_SESSION['workorder_id'] = $workorder_id;
+            header("Location: work-order-payment.php"); exit();
+            
+
+            //header("Location: view-workorder-invoices.php?project_id=$project_id&workorder_id=$workorder_id"); exit();
         }else {
             $conn->rollback();
             $_SESSION['error'] = "Failed to save cess invoice history and razorpay transaction. Please try again.";
