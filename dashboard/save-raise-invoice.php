@@ -60,7 +60,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $cessPaymentHistoryInsertStmt = $conn->prepare("INSERT INTO cess_payment_history (project_id, workorder_id, invoice_amount, cess_amount, gst_cess_amount, administrative_cost, effective_cess_amount, employer_id, cess_payment_mode, cess_receipt_file, payment_status, is_payment_verified, invoice_upload_type, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         $cessPaymentHistoryInsertStmt->bind_param("iidddddiissisi",$project_id, $workorder_id, $invoice_amount, $cess_amount, $gst_cess_amount, $administrative_cost, $effective_cess_amount, $employer_id, $cessPaymentMode, $cessReceiptFile, $paymentStatus, $isPaymentVerified, $invoiceUploadType, $createdBy);
-        $cessPaymentHistoryInsertStmt->execute();
         if ($cessPaymentHistoryInsertStmt->execute()) {
             $amountInPaisa = $invoice_amount * 100;
             $orderData = [
@@ -105,8 +104,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['project_id'] = $project_id;
             $_SESSION['workorder_id'] = $workorder_id;
             header("Location: work-order-payment.php"); exit();
-            
-
             //header("Location: view-workorder-invoices.php?project_id=$project_id&workorder_id=$workorder_id"); exit();
         }else {
             $conn->rollback();
