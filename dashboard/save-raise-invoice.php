@@ -62,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $cessPaymentHistoryInsertStmt->bind_param("iidddddiissisi",$project_id, $workorder_id, $invoice_amount, $cess_amount, $gst_cess_amount, $administrative_cost, $effective_cess_amount, $employer_id, $cessPaymentMode, $cessReceiptFile, $paymentStatus, $isPaymentVerified, $invoiceUploadType, $createdBy);
         $cessPaymentHistoryInsertStmt->execute();
         if ($cessPaymentHistoryInsertStmt->execute()) {
-            $amountInPaisa = $amount * 100;
+            $amountInPaisa = $invoice_amount * 100;
             $orderData = [
                 'amount' => $amountInPaisa,
                 'payment_capture' => 1,
@@ -85,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $orderId = $razorpayOrder['id'];
             $requestData = json_encode($orderData);
             $bulk_invoice_id = 0; 
-            $razorpayTransactionInsertStmt->bind_param("siidssi", $orderId, $_SESSION['user_id'], $bulk_invoice_id, $amount, $razorpayOrder['status'], $requestData, $createdBy);
+            $razorpayTransactionInsertStmt->bind_param("siidssi", $orderId, $_SESSION['user_id'], $bulk_invoice_id, $invoice_amount, $razorpayOrder['status'], $requestData, $createdBy);
             $razorpayTransactionInsertStmt->execute();
 
             $conn->commit();
