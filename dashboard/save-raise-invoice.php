@@ -21,11 +21,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $project_id = intval($_POST['project_id']) ;
     $workorder_id = intval($_POST['workorder_id']) ;
-    $amount = trim($_POST['amount'] ?? '');
+    $invoice_amount = trim($_POST['amount'] ?? '');
     $payment_type = trim($_POST['payment_type'] ?? '');
     
     // Basic validation
-    if (empty($workorder_id) || empty($amount) || empty($payment_type)) {
+    if (empty($workorder_id) || empty($invoice_amount) || empty($payment_type)) {
         $_SESSION['error'] = "Please fill in all required fields (Amount, Payment type).";
         header("Location: raise-workorder-invoice.php?workorder_id=$workorder_id&project_id=$project_id"); exit;
     }
@@ -46,12 +46,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $checkStmt->close();
         $workOrderData = $result->fetch_assoc();
 
-        $projectId = $workOrderData['project_id'];
-        $cessAmount = $workOrderData['work_order_cess_amount'];
-        $gstCessAmount = ($amount * 0.02); // 2% GST on CESS amount
-        $administrativeCost = ($amount * 0.05); // 5% Administrative cost
-        $effectiveCessAmount = $amount + $gstCessAmount + $administrativeCost;
-        $employerId = $workOrderData['employer_id'];
+        $cess_amount = ($invoice_amount * 0.01); // 1% GST on CESS amount
+        $gst_cess_amount = $cess_amount; //2% GST on CESS amount
+        $administrative_cost = ($gst_cess_amount * 0.01); // 5% Administrative cost
+        $effective_cess_amount = $gst_cess_amount - $administrative_cost;
+        $employer_id = $workOrderData['employer_id'];
         $cessPaymentMode = 1;
         $cessReceiptFile = NULL;
         $paymentStatus = "Pending";
@@ -60,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $createdBy = $_SESSION['user_id'];
 
         $cessPaymentHistoryInsertStmt = $conn->prepare("INSERT INTO cess_payment_history (project_id, workorder_id, invoice_amount, cess_amount, gst_cess_amount, administrative_cost, effective_cess_amount, employer_id, cess_payment_mode, cess_receipt_file, payment_status, is_payment_verified, invoice_upload_type, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $cessPaymentHistoryInsertStmt->bind_param("iidddddiissisi",$projectId, $workorder_id, $amount, $cessAmount, $gstCessAmount, $administrativeCost, $effectiveCessAmount, $employerId, $cessPaymentMode, $cessReceiptFile, $paymentStatus, $isPaymentVerified, $invoiceUploadType, $createdBy);
+        $cessPaymentHistoryInsertStmt->bind_param("iidddddiissisi",$project_id, $workorder_id, $invoice_amount, $cess_amount, $gst_cess_amount, $administrative_cost, $effective_cess_amount, $employer_id, $cessPaymentMode, $cessReceiptFile, $paymentStatus, $isPaymentVerified, $invoiceUploadType, $createdBy);
         $cessPaymentHistoryInsertStmt->execute();
         if ($cessPaymentHistoryInsertStmt->execute()) {
             $amountInPaisa = $amount * 100;
@@ -103,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Set the success message to be displayed after payment
             $_SESSION['success'] = "Invoice Raised Successfully.";
-            header("Location: view-workorder-invoices.php?workorder_id=$workorder_id"); exit();
+            header("Location: view-workorder-invoices.php?project_id=$project_id&workorder_id=$workorder_id"); exit();
         }else {
             $conn->rollback();
             $_SESSION['error'] = "Failed to save cess invoice history and razorpay transaction. Please try again.";
