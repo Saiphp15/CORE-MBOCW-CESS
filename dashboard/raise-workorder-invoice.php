@@ -112,13 +112,8 @@ scratch. This page gets rid of all links and provides the needed markup only.
                       </div>
                     </div>
                     <br /><br />
-<<<<<<< HEAD:dashboard/raise-workorder-invoice.php
                     <button type="submit" class="btn btn-success">Submit</button>
                     <a href="view-project.php?id=<?= $_GET['project_id']; ?>" class="btn btn-default ml-2">Cancel</a>
-=======
-                    <button type="submit" class="btn btn-info">Save</button>
-                    <a href="projects.php" class="btn btn-default ml-2">Cancel</a>
->>>>>>> 1b34e11c81b97c8f4d08d80fb7589777799bfc87:dashboard/raise-invoice.php
                   </form>
                 </div>
               </div>
