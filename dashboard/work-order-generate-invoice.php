@@ -29,7 +29,7 @@ rt.amount,
 rt.status,
 rt.created_at as payment_date 
 FROM cess_payment_history cph
-LEFT JOIN razorpay_transactions rt ON cph.workorder_id = rt.workorder_id 
+LEFT JOIN razorpay_transactions rt ON cph.id = rt.cess_payment_history_id 
 WHERE cph.id = ?
 ");
 $stmt->bind_param("i", $id);
@@ -96,11 +96,11 @@ $html = '
         <table>
             <tr>
                 <td class="label">Amount:</td>
-                <td class="value">' . htmlspecialchars($invoice['amount']) . '</td>
+                <td class="value">' . (isset($invoice['amount']) && $invoice['amount'] !== '' ? htmlspecialchars($invoice['amount']) : '0.00') . '</td>
             </tr>
             <tr>
                 <td class="label">Payment Mode:</td>
-                <td class="value">' . htmlspecialchars($paymentMode) . '</td>
+                <td class="value">' . (isset($paymentMode) && $paymentMode !== '' ? htmlspecialchars($paymentMode) : 'N/A') . '</td>
             </tr>
             <tr>
                 <td class="label">Challan No/ Net Banking:</td>
@@ -108,18 +108,18 @@ $html = '
             </tr>
             <tr>
                 <td class="label">Chq./Ref.No./UTR No/Payment ID:</td>
-                <td class="value">' . htmlspecialchars($invoice['payment_id']) . '</td>
+                <td class="value">' . (isset($invoice['payment_id']) && $invoice['payment_id'] !== '' ? htmlspecialchars($invoice['payment_id']) : 'N/A') . '</td>
             </tr>
             <tr>
                 <td class="label">Payment Date:</td>
-                <td class="value">' . htmlspecialchars($invoice['payment_date']) . '</td>
+                <td class="value">' . (isset($invoice['payment_date']) && $invoice['payment_date'] !== '' ? htmlspecialchars(date('Y-m-d', strtotime($invoice['payment_date']))) : 'N/A') . '</td>
             </tr>
         </table>
         <div class="section-title">Payment Details</div>
         <table>
             <tr>
                 <td class="label">Payment Status:</td>
-                <td class="value">' . htmlspecialchars($invoice['status']) . '</td>
+                <td class="value">' . (isset($invoice['status']) && $invoice['status'] !== '' ? htmlspecialchars($invoice['status']) : 'N/A') . '</td>
             </tr>
             <tr>
                 <td class="label">Receipt ID:</td>

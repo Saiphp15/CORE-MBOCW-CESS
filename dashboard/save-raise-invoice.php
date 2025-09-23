@@ -60,7 +60,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $cessPaymentHistoryInsertStmt = $conn->prepare("INSERT INTO cess_payment_history (project_id, workorder_id, invoice_amount, cess_amount, gst_cess_amount, administrative_cost, effective_cess_amount, employer_id, cess_payment_mode, cess_receipt_file, payment_status, is_payment_verified, invoice_upload_type, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         $cessPaymentHistoryInsertStmt->bind_param("iidddddiissisi",$project_id, $workorder_id, $invoice_amount, $cess_amount, $gst_cess_amount, $administrative_cost, $effective_cess_amount, $employer_id, $cessPaymentMode, $cessReceiptFile, $paymentStatus, $isPaymentVerified, $invoiceUploadType, $createdBy);
-        if ($cessPaymentHistoryInsertStmt->execute()) {
+        $cessPaymentHistoryInsertStmt->execute();
+        if ($cessPaymentHistoryInsertStmt->affected_rows > 0) {
+            $cess_payment_history_id = $conn->insert_id;
             $amountInPaisa = $invoice_amount * 100;
             $orderData = [
                 'amount' => $amountInPaisa,
@@ -80,11 +82,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $api = new Api($keyId, $keySecret);
             $razorpayOrder = $api->order->create($orderData);
             
-            $razorpayTransactionInsertStmt = $conn->prepare("INSERT INTO razorpay_transactions (order_id, user_id, bulk_invoice_id, amount, status, request_data, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $razorpayTransactionInsertStmt = $conn->prepare("INSERT INTO razorpay_transactions (order_id, user_id, bulk_invoice_id, amount, status, request_data, created_by, cess_payment_history_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
             $orderId = $razorpayOrder['id'];
             $requestData = json_encode($orderData);
             $bulk_invoice_id = 0; 
-            $razorpayTransactionInsertStmt->bind_param("siidssi", $orderId, $_SESSION['user_id'], $bulk_invoice_id, $invoice_amount, $razorpayOrder['status'], $requestData, $createdBy);
+            $razorpayTransactionInsertStmt->bind_param("siidssii", $orderId, $_SESSION['user_id'], $bulk_invoice_id, $invoice_amount, $razorpayOrder['status'], $requestData, $createdBy, $cess_payment_history_id);
             $razorpayTransactionInsertStmt->execute();
 
             $conn->commit();

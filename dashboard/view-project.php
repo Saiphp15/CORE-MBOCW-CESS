@@ -211,10 +211,14 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                         $remainingAmount = 0;
                                         $wo_invoice_amount = $conn->query("SELECT SUM(invoice_amount) as amount FROM cess_payment_history WHERE workorder_id = " . $wo['id'])->fetch_assoc()['amount'] ?? 0;
                                         $remainingAmount = $wo['work_order_amount']-$wo_invoice_amount ;
+                                        $loggedInUserId     = $_SESSION['user_id'];
+                                        $loggedInUserRole   = $_SESSION['user_role'];
                                     ?>
                                     <div class="row">
                                         <div class="col-md-12 d-flex justify-content-end">
+                                            <?php if($loggedInUserRole == 3 || $loggedInUserRole == 7) { ?>
                                             <a href="raise-workorder-invoice.php?workorder_id=<?= $wo['id'] ?>&project_id=<?= $_GET['id']; ?>" class="btn btn-primary" <?= $remainingAmount < 0 ? 'disabled' : "" ?> <?= $remainingAmount < 0 ? 'onclick="return false;"' : '' ?>><i class="fas fa-eye"></i> Raise Invoice</a> &nbsp; 
+                                            <?php } ?>
                                             <a href="view-workorder-invoices.php?project_id=<?=$project_id?>&workorder_id=<?= $wo['id'] ?>" class="btn btn-warning ms-2"><i class="fas fa-eye"></i> View Invoices</a>
                                         </div>
                                         <div class="col-md-6">
