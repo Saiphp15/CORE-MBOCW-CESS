@@ -207,11 +207,15 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                 ?>
                                 
                                 <div class="work-order-section border p-3 mb-3">
-                                   
+                                    <?php 
+                                        $remainingAmount = 0;
+                                        $wo_invoice_amount = $conn->query("SELECT SUM(invoice_amount) as amount FROM cess_payment_history WHERE workorder_id = " . $wo['id'])->fetch_assoc()['amount'] ?? 0;
+                                        $remainingAmount = $wo['work_order_amount']-$wo_invoice_amount ;
+                                    ?>
                                     <div class="row">
                                         <div class="col-md-12 d-flex justify-content-end">
-                                            <a href="raise-workorder-invoice.php?workorder_id=<?= $wo['id'] ?>&project_id=<?= $_GET['id']; ?>" class="btn btn-primary"><i class="fas fa-eye"></i> Raise Invoice</a> 
-                                            <a href="view-workorder-invoices.php?workorder_id=<?= $wo['id'] ?>" class="btn btn-warning ms-2"><i class="fas fa-edit"></i> View Invoice</a>
+                                            <a href="raise-workorder-invoice.php?workorder_id=<?= $wo['id'] ?>&project_id=<?= $_GET['id']; ?>" class="btn btn-primary" <?= $remainingAmount < 0 ? 'disabled' : "" ?> <?= $remainingAmount < 0 ? 'onclick="return false;"' : '' ?>><i class="fas fa-eye"></i> Raise Invoice</a> &nbsp; 
+                                            <a href="view-workorder-invoices.php?project_id=<?=$project_id?>&workorder_id=<?= $wo['id'] ?>" class="btn btn-warning ms-2"><i class="fas fa-eye"></i> View Invoices</a>
                                         </div>
                                         <div class="col-md-6">
                                             <p><strong>Work Order Number:</strong> <?= htmlspecialchars($wo['work_order_number']) ?></p>
@@ -221,6 +225,9 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                         </div>
                                         <div class="col-md-6">
                                             <p><strong>Work Order Amount:</strong> ₹<?= number_format($wo['work_order_amount'], 2) ?></p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p><strong>Work Order Remain Amount:</strong> ₹<?= number_format($remainingAmount, 2) ?></p>
                                         </div>
                                         <div class="col-md-6">
                                             <p><strong>Approval Letter:</strong>

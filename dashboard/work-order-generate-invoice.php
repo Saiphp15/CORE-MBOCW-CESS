@@ -12,35 +12,33 @@ require_once '../config/db.php';
 // Get invoice id
 if (!isset($_GET['id']) || empty($_GET['id'])) {
     $_SESSION['error'] = "Invalid request!";
-    header("Location: bulk-invoices-history.php"); // redirect to list
+    header("Location: projects.php"); // redirect to list
     exit;
 }
 
 $id = intval($_GET['id']);
 $stmt = $conn->prepare("
 SELECT 
-bpih.id, 
-bpih.bulk_project_invoices_template_file, 
-bpih.cess_payment_mode,
-bpih.is_payment_verified,
-bpih.rejection_reason,
+cph.id, 
+cph.cess_payment_mode,
+cph.is_payment_verified,
+cph.rejection_reason,
 rt.order_id ,
 rt.payment_id,
 rt.amount,
 rt.status,
 rt.created_at as payment_date 
-FROM bulk_projects_invoices_history bpih
-LEFT JOIN razorpay_transactions rt ON bpih.id = rt.bulk_invoice_id 
-WHERE bpih.id = ?
+FROM cess_payment_history cph
+LEFT JOIN razorpay_transactions rt ON cph.workorder_id = rt.workorder_id 
+WHERE cph.id = ?
 ");
 $stmt->bind_param("i", $id);
 $stmt->execute();
 $result = $stmt->get_result();
 $invoice = $result->fetch_assoc();
-
 if (!$invoice) {
     $_SESSION['error'] = "Invoice not found!";
-    header("Location: bulk-invoices-history.php");
+    header("Location: projects.php");
     exit;
 }
 
@@ -132,6 +130,7 @@ $html = '
     </div>';
 
 // Output the HTML content
+// $pdf->writeHTML($html, true, false, true, false, '');
 $pdf->writeHTML($html, true, false, true, false, '');
 
 // Close and output PDF document
