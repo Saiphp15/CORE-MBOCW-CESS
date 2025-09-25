@@ -106,7 +106,7 @@ $html = '
             </tr>
             <tr>
                 <td class="label">Challan No/ Net Banking:</td>
-                <td class="value">XXXXXXX</td>
+                <td class="value">'.(isset($invoice['order_id']) && $invoice['order_id'] !== '' ? htmlspecialchars($invoice['order_id']) : 'N/A')  .'</td>
             </tr>
             <tr>
                 <td class="label">Chq./Ref.No./UTR No/Payment ID:</td>
