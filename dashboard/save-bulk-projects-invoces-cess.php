@@ -137,19 +137,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES['bulk_projects_invoice
         // }
 
         // --- Get local_authority_id based on role ---
+
+        //print_r($_SESSION); die;
         $localAuthorityId = null;
 
         // Find the role of the logged-in user
-        $userRoleStmt = $conn->prepare("SELECT role, created_by FROM users WHERE id = ?");
-        $userRoleStmt->bind_param("i", $createdBy);
-        $userRoleStmt->execute();
-        $userRoleResult = $userRoleStmt->get_result();
-        $userData = $userRoleResult->fetch_assoc();
-        $userRoleStmt->close();
+        // $userRoleStmt = $conn->prepare("SELECT role, created_by FROM users WHERE id = ?");
+        // $userRoleStmt->bind_param("i", $createdBy);
+        // $userRoleStmt->execute();
+        // $userRoleResult = $userRoleStmt->get_result();
+        // $userData = $userRoleResult->fetch_assoc();
+        // $userRoleStmt->close();
         
-        if ($userData) {
-            $role = strtolower($userData['role']); // e.g., "cfo", "engineer"
+       // if ($userData) {
+     //       $role = strtolower($userData['role']); // e.g., "cfo", "engineer"
            //  echo '==='.$role; die; 
+           $role = $_SESSION['user_role']; ;
             if ($role === 3) {
                 // CFO → get local_authority_id from local_authorities_users 
                 $getLocalAuthority = $conn->prepare("
@@ -158,7 +161,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES['bulk_projects_invoice
                     WHERE user_id = ? AND is_active = 1 
                     LIMIT 1
                 ");
-                 echo '<pre>'; print_r($getLocalAuthority); echo '</pre>'; die;  
+                  
                 $getLocalAuthority->bind_param("i", $createdBy);
                 $getLocalAuthority->execute();
                 $result = $getLocalAuthority->get_result();
@@ -169,16 +172,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES['bulk_projects_invoice
                 $getLocalAuthority->close();
 
             } elseif ($role === 7) {
-                // Engineer → get creator’s local_authority_id
-                $creatorId = intval($userData['created_by']);
-                if ($creatorId > 0) {
+                // Engineer → get creator’s local_authority_id   
+                                
                     $getCreatorAuthority = $conn->prepare("
-                        SELECT local_authority_id 
-                        FROM local_authorities_users 
-                        WHERE user_id = ? AND is_active = 1 
+                        SELECT lau.local_authority_id , u.created_by
+                        FROM local_authorities_users as lau 
+                        JOIN users as u ON u.created_by = lau.user_id
+                        WHERE u.id = u.created_by AND lau.user_id = ? AND lau.is_active = 1 
                         LIMIT 1
                     ");
-                    $getCreatorAuthority->bind_param("i", $creatorId);
+                    $getCreatorAuthority->bind_param("i", $createdBy);
                     $getCreatorAuthority->execute();
                     $creatorAuthResult = $getCreatorAuthority->get_result();
                     if ($creatorAuthResult->num_rows > 0) {
@@ -186,16 +189,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES['bulk_projects_invoice
                         $localAuthorityId = $creatorAuthRow['local_authority_id'];
                     }
                     $getCreatorAuthority->close();
-                }
+               
             }
-        }
+      //  }
 
         // Final check — prevent inserting 0 if nothing found
-        if (!$localAuthorityId) {
-            $_SESSION['error'] = "Unable to determine local authority for this user.";
-            header("Location: bulk-projects-invoice-cess-upload-form.php");
-            exit();
-        }
+        // if (!$localAuthorityId) {
+        //     $_SESSION['error'] = "Unable to determine local authority for this user.";
+        //     header("Location: bulk-projects-invoice-cess-upload-form.php");
+        //     exit();
+        // }
 
 
         // Loop through each row of the worksheet, starting from the second row (skipping the header)
