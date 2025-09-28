@@ -8,7 +8,7 @@ require_once 'config/db.php';
 require_once 'common/emailVerification.php';
 
 
-$action = $_POST['action'] ? $_POST['action'] : "";
+$action = isset($_POST['action']) ? $_POST['action'] : "";
 
 if( $action == 'email_verification_email_send' ) {
     $fullname = $_POST['full_name'] ?  $_POST['full_name']  : "";

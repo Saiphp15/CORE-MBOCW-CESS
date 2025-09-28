@@ -34,7 +34,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION["user_email"] = $userEmail;
             $_SESSION["user_role"] = $role;
             $_SESSION["user_role_name"] = $roleName;
-
+            if( $role == 3 &&  $roleName == 'Authority / Chief Account Finance Officer') {
+                $stmt = $conn->prepare("SELECT * FROM local_authorities_users where user_id = ? AND is_active=1 LIMIT 1");
+                $stmt->bind_param('i', $id);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                $localAuth = $result->fetch_assoc();
+                if(!empty($localAuth) && isset($localAuth['local_authority_id']) && $localAuth['local_authority_id'] == 0) {
+                    $_SESSION['error'] = "Note: Your account is not yet linked with any Local Authority. Please contact the administrator to complete the linking process and then try logging in again to access your dashboard..";
+                    header("Location: login.php");
+                    exit;       
+                }
+                
+            }
             $stmt = $conn->prepare("SELECT p.name FROM role_permissions rp JOIN permissions p ON rp.permission_id = p.id WHERE rp.role_id = ?");
             $stmt->bind_param('i', $role);
             $stmt->execute();

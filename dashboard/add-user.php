@@ -134,7 +134,10 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                             <select name="role" id="role" class="form-control">
                                                 <option value="">Choose role</option>
                                                 <?php foreach ($roles as $role): ?>
-                                                <option value="<?= $role['id'] ?>"><?= $role['name'] ?></option>
+                                                    <?php if($_SESSION['user_role'] == 1 && $role['id'] == 7 ) {
+                                                        continue;
+                                                    } ?>
+                                                    <option value="<?= $role['id'] ?>"><?= $role['name'] ?></option>
                                                 <?php endforeach; ?>
                                             </select>
                                         </div>
