@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Sep 04, 2025 at 01:36 PM
+-- Generation Time: Sep 25, 2025 at 04:07 AM
 -- Server version: 9.1.0
 -- PHP Version: 8.2.26
 
@@ -47,8 +47,7 @@ INSERT INTO `authority_departments` (`id`, `name`, `description`, `is_active`, `
 (2, 'Public Works', 'Roads, bridges, government infrastructure', 1, '2025-08-06 06:36:31', '2025-08-06 06:36:31'),
 (3, 'Industrial', 'Factories, power plants, logistics parks', 1, '2025-08-06 06:36:31', '2025-09-02 07:25:39'),
 (4, 'Large Infrastructure', 'Airports, ports, expressways, rail', 1, '2025-08-06 06:36:31', '2025-08-06 06:36:31'),
-(5, 'Other', 'Miscellaneous government schemes and smart projects', 1, '2025-08-06 06:36:31', '2025-08-06 06:36:31'),
-(6, 'gdhfgj', 'fdf uot', 1, '2025-09-02 14:17:55', '2025-09-02 14:26:48');
+(5, 'Other', 'Miscellaneous government schemes and smart projects', 1, '2025-08-06 06:36:31', '2025-08-06 06:36:31');
 
 -- --------------------------------------------------------
 
@@ -92,8 +91,7 @@ INSERT INTO `authority_subdepartments` (`id`, `department_id`, `name`, `descript
 (14, 4, 'Port Development', 'Docks, shipping yards', '', '', 1, '2025-08-06 06:37:24', '2025-08-06 06:37:24'),
 (15, 5, 'Slum Rehabilitation', 'SRD or MHADA projects', '', '', 1, '2025-08-06 06:37:24', '2025-08-06 06:37:24'),
 (16, 5, 'Smart City Projects', 'IT infra, smart lights', '', '', 1, '2025-08-06 06:37:24', '2025-08-06 06:37:24'),
-(17, 5, 'Affordable Housing', 'PMAY or low-cost housing', '', '', 1, '2025-08-06 06:37:24', '2025-09-02 14:37:18'),
-(18, 3, 'sgfsgsf fdhdjd', 'hffj', '', '', 1, '2025-09-02 14:59:50', '2025-09-02 15:11:16');
+(17, 5, 'Affordable Housing', 'PMAY or low-cost housing', '', '', 1, '2025-08-06 06:37:24', '2025-09-02 14:37:18');
 
 -- --------------------------------------------------------
 
@@ -106,7 +104,7 @@ CREATE TABLE IF NOT EXISTS `bulk_projects_invoices_history` (
   `id` int NOT NULL AUTO_INCREMENT,
   `effective_cess_amount` decimal(15,2) NOT NULL,
   `bulk_project_invoices_template_file` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  `cess_payment_mode` int NOT NULL COMMENT '1=Online ,2=Offline, 3=Exempted',
+  `cess_payment_mode` int NOT NULL COMMENT '1=Online/Net Banking ,2=Challan, 3=Exempted',
   `is_payment_verified` int NOT NULL COMMENT '1=verified, 2=pending, 3=rejected',
   `rejection_reason` text NOT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -123,7 +121,7 @@ CREATE TABLE IF NOT EXISTS `bulk_projects_invoices_history` (
 DROP TABLE IF EXISTS `cess_payment_history`;
 CREATE TABLE IF NOT EXISTS `cess_payment_history` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `bulk_invoice_id` int NOT NULL,
+  `bulk_invoice_id` int DEFAULT NULL,
   `project_id` int DEFAULT NULL,
   `workorder_id` int NOT NULL,
   `invoice_amount` decimal(15,2) DEFAULT NULL,
@@ -137,6 +135,7 @@ CREATE TABLE IF NOT EXISTS `cess_payment_history` (
   `payment_status` text NOT NULL COMMENT 'payment gateway statuses',
   `is_payment_verified` int NOT NULL COMMENT '1=verified, 2=pending, 3=rejected',
   `invoice_upload_type` enum('bulk','single') NOT NULL,
+  `rejection_reason` varchar(255) DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `created_by` int NOT NULL,
   PRIMARY KEY (`id`)
@@ -305,7 +304,15 @@ CREATE TABLE IF NOT EXISTS `local_authorities_users` (
   `created_by` int NOT NULL,
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `local_authorities_users`
+--
+
+INSERT INTO `local_authorities_users` (`id`, `local_authority_id`, `user_id`, `role`, `is_active`, `created_at`, `created_by`, `updated_at`) VALUES
+(1, 0, 22, 3, 1, '2025-09-10 10:16:57', 1, '2025-09-10 10:16:57'),
+(2, 0, 23, 7, 1, '2025-09-10 10:20:29', 1, '2025-09-10 10:20:29');
 
 -- --------------------------------------------------------
 
@@ -481,6 +488,8 @@ CREATE TABLE IF NOT EXISTS `razorpay_transactions` (
   `signature` varchar(255) DEFAULT NULL,
   `user_id` int NOT NULL,
   `bulk_invoice_id` int NOT NULL,
+  `workorder_id` int DEFAULT NULL,
+  `cess_payment_history_id` int DEFAULT NULL,
   `amount` decimal(10,2) NOT NULL,
   `currency` varchar(10) NOT NULL DEFAULT 'INR',
   `status` enum('created','paid','failed') NOT NULL DEFAULT 'created',
@@ -665,20 +674,23 @@ CREATE TABLE IF NOT EXISTS `users` (
   `gstn` varchar(20) NOT NULL,
   `pancard` varchar(10) NOT NULL,
   `aadhaar` varchar(12) NOT NULL,
+  `token` varchar(255) NOT NULL,
   `is_active` int NOT NULL COMMENT '1=active, 2=inactive, 3=deleted',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `created_by` int NOT NULL,
   `updated_at` datetime NOT NULL,
   `updated_by` int NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `name`, `email`, `password`, `phone`, `gender`, `state_id`, `district_id`, `taluka_id`, `village_id`, `address`, `role`, `gstn`, `pancard`, `aadhaar`, `is_active`, `created_at`, `created_by`, `updated_at`, `updated_by`) VALUES
-(1, 'Super Admin', 'superadmin@gmail.com', '17c4520f6cfd1ab53d8745e84681eb49', 1234567895, 'M', 14, 27, 27, 2, '', 1, '', '', '', 1, '2025-08-24 16:34:52', 1, '0000-00-00 00:00:00', 0);
+INSERT INTO `users` (`id`, `name`, `email`, `password`, `phone`, `gender`, `state_id`, `district_id`, `taluka_id`, `village_id`, `address`, `role`, `gstn`, `pancard`, `aadhaar`, `token`, `is_active`, `created_at`, `created_by`, `updated_at`, `updated_by`) VALUES
+(1, 'Super Admin', 'superadmin@gmail.com', '17c4520f6cfd1ab53d8745e84681eb49', 1234567895, 'M', 14, 27, 27, 2, '', 1, '', '', '', '', 1, '2025-08-24 16:34:52', 1, '0000-00-00 00:00:00', 0),
+(22, 'Babasaheb Atpadkar', 'babasahebatpadkar@gmail.com', 'e10adc3949ba59abbe56e057f20f883e', 2147483647, 'M', 14, 27, 27, 16, '0', 3, '', '', '', '', 1, '2025-09-10 10:16:57', 1, '0000-00-00 00:00:00', 0),
+(23, 'Sai Atpadkar', 'saiatpadkar15@gmail.com', 'e10adc3949ba59abbe56e057f20f883e', 1234567899, 'M', 14, 27, 27, 7, '0', 7, '', '', '', '', 1, '2025-09-10 10:20:29', 22, '0000-00-00 00:00:00', 0);
 
 -- --------------------------------------------------------
 

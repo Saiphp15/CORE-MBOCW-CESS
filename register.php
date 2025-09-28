@@ -353,7 +353,9 @@ if (isset($_SESSION['success']) && !empty($_SESSION['success'])) {
 
                 <!-- CAFO Personal Details -->
                 <h5 class="text-primary">CAFO Personal Details</h5>
-                <p><strong>Note:</strong>Registration with the Local Authority under CAFO will not be processed until both the email address and mobile number have been verified</p>
+                <div class="alert alert-primary" role="alert">
+                    <strong>Note: </strong>Registration with the Local Authority under CAFO will not be processed until both the email address and mobile number have been verified!
+                </div>
                 <div class="col-md-6">
                     <label class="form-label">Full Name <span class="text-danger">*</span></label>
                     <input type="text" value="<?= htmlspecialchars($old['cafo_name'] ?? '') ?>" class="form-control" name="cafo_name" id="cafo_name" placeholder="Enter Full Name" required>
@@ -443,12 +445,12 @@ if (isset($_SESSION['success']) && !empty($_SESSION['success'])) {
 	        var moblieVerification = false;
             $('.register-button').hide();
             function checkVerification() {
-            if (emailVerification && moblieVerification) {
-                $('.register-button').show();
-            } else {
-                $('.register-button').hide();
+                if (emailVerification && moblieVerification) {
+                    $('.register-button').show();
+                } else {
+                    $('.register-button').hide();
+                }
             }
-        }
             // Aadhaar validation
             $('#aadhaar').on('input', function() {
                 const aadhaar = $(this).val();
