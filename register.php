@@ -353,6 +353,7 @@ if (isset($_SESSION['success']) && !empty($_SESSION['success'])) {
 
                 <!-- CAFO Personal Details -->
                 <h5 class="text-primary">CAFO Personal Details</h5>
+                <p><strong>Note:</strong>Registration with the Local Authority under CAFO will not be processed until both the email address and mobile number have been verified</p>
                 <div class="col-md-6">
                     <label class="form-label">Full Name <span class="text-danger">*</span></label>
                     <input type="text" value="<?= htmlspecialchars($old['cafo_name'] ?? '') ?>" class="form-control" name="cafo_name" id="cafo_name" placeholder="Enter Full Name" required>
@@ -440,6 +441,14 @@ if (isset($_SESSION['success']) && !empty($_SESSION['success'])) {
         $(document).ready(function() {
             var emailVerification = false;
 	        var moblieVerification = false;
+            $('.register-button').hide();
+            function checkVerification() {
+            if (emailVerification && moblieVerification) {
+                $('.register-button').show();
+            } else {
+                $('.register-button').hide();
+            }
+        }
             // Aadhaar validation
             $('#aadhaar').on('input', function() {
                 const aadhaar = $(this).val();
@@ -601,6 +610,7 @@ if (isset($_SESSION['success']) && !empty($_SESSION['success'])) {
                     success: function(response) {
                         if (response.success) {
                             emailVerification = true;
+                            checkVerification();
                             $('#div_email_verifcation_code').addClass('d-none');
                             $('#verifyEmailBtn').removeClass('btn-outline-secondary').text('Verified').addClass('btn-outline-success').prop('disabled', true);
                         }
@@ -678,6 +688,8 @@ if (isset($_SESSION['success']) && !empty($_SESSION['success'])) {
                     },
                     success: function(response) {
                         if (response.success) {
+                            moblieVerification = true;
+                            checkVerification();
                             if (emailVerification) {
                                 $('.register-button').prop('disabled', false);
                             }

@@ -123,6 +123,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
                     <thead>
                       <tr>
                         <th>Sr.No</th>
+                        <th>Invoice Amount</th>
                         <th>Total Effective Cess</th>
                         <!-- <th>Bulk Uploaded File</th> -->
                         <th>Payment Mode</th>
@@ -143,6 +144,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
                       if ($loggedInUserId == 1 && $loggedInUserRole == 1) {
                         $sql = "SELECT 
                                   cph.id,
+                                  cph.invoice_amount,
                                   cph.effective_cess_amount,
                                   cph.cess_payment_mode,
                                   cph.is_payment_verified,
@@ -156,6 +158,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
                         // CAFO: see own + engineers under him
                         $sql = "SELECT 
                                     cph.id,
+                                    cph.invoice_amount,
                                     cph.effective_cess_amount,
                                     cph.cess_payment_mode,
                                     cph.is_payment_verified,
@@ -172,6 +175,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
                         // Engineer: see only his own
                         $sql = "SELECT 
                                     cph.id,
+                                    cph.invoice_amount,
                                     cph.effective_cess_amount,
                                     cph.cess_payment_mode,
                                     cph.is_payment_verified,
@@ -189,6 +193,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
                         while ($row = mysqli_fetch_assoc($result)) {
                           echo "<tr id='row-{$row['id']}'>";
                           echo "<td>{$sr}</td>";
+                          echo "<td>₹" . htmlspecialchars(number_format($row['invoice_amount'], 2)) . "</td>";
                           echo "<td>₹" . htmlspecialchars(number_format($row['effective_cess_amount'], 2)) . "</td>";
                           // echo "<td>" . htmlspecialchars($row['bulk_project_invoices_template_file']) . " <a href='../uploads/bulk_upload_templates/". htmlspecialchars($row['bulk_project_invoices_template_file']) ."' download><i class='fas fa-download'></i></a></td>";
                           echo "<td>" . htmlspecialchars(getPaymentModeName($row['cess_payment_mode'])) . "</td>";
