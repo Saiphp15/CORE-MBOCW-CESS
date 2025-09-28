@@ -86,7 +86,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
       </div><!-- /.container-fluid -->
     </div>
     <!-- /.content-header -->
-
+<?php echo '<pre>'; print_r($project); die;echo '</pre>'; ?>
     <!-- Main content -->
     <div class="content">
         <div class="container-fluid">

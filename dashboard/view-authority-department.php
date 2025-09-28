@@ -109,7 +109,7 @@ if (!$category) {
               </div>
             </div>
             <div class="card-footer">
-              <a href="project-categories.php" class="btn btn-secondary">Back</a>
+              <a href="authority-departments.php" class="btn btn-secondary">Back</a>
             </div>
           </form>
         </div>
