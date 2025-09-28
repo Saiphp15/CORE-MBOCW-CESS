@@ -129,12 +129,74 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES['bulk_projects_invoice
         $errors = [];
 
         //get local authority id from local_authorities_users based on logged in user id
+        // $localAuthorityId = null;
+        // $getLoggedInUserLocalAuthorityId = $conn->query("SELECT local_authority_id FROM local_authorities_users WHERE user_id = " . $createdBy . " LIMIT 1");
+        // if ($getLoggedInUserLocalAuthorityId->num_rows > 0) {
+        //     $row = $getLoggedInUserLocalAuthorityId->fetch_assoc();
+        //     $localAuthorityId = $row['local_authority_id'];
+        // }
+
+        // --- Get local_authority_id based on role ---
         $localAuthorityId = null;
-        $getLoggedInUserLocalAuthorityId = $conn->query("SELECT local_authority_id FROM local_authorities_users WHERE user_id = " . $createdBy . " LIMIT 1");
-        if ($getLoggedInUserLocalAuthorityId->num_rows > 0) {
-            $row = $getLoggedInUserLocalAuthorityId->fetch_assoc();
-            $localAuthorityId = $row['local_authority_id'];
+
+        // Find the role of the logged-in user
+        $userRoleStmt = $conn->prepare("SELECT role, created_by FROM users WHERE id = ?");
+        $userRoleStmt->bind_param("i", $createdBy);
+        $userRoleStmt->execute();
+        $userRoleResult = $userRoleStmt->get_result();
+        $userData = $userRoleResult->fetch_assoc();
+        $userRoleStmt->close();
+        
+        if ($userData) {
+            $role = strtolower($userData['role']); // e.g., "cfo", "engineer"
+           //  echo '==='.$role; die; 
+            if ($role === 3) {
+                // CFO → get local_authority_id from local_authorities_users 
+                $getLocalAuthority = $conn->prepare("
+                    SELECT local_authority_id 
+                    FROM local_authorities_users 
+                    WHERE user_id = ? AND is_active = 1 
+                    LIMIT 1
+                ");
+                 echo '<pre>'; print_r($getLocalAuthority); echo '</pre>'; die;  
+                $getLocalAuthority->bind_param("i", $createdBy);
+                $getLocalAuthority->execute();
+                $result = $getLocalAuthority->get_result();
+                if ($result->num_rows > 0) {
+                    $row = $result->fetch_assoc();
+                    $localAuthorityId = $row['local_authority_id'];
+                }
+                $getLocalAuthority->close();
+
+            } elseif ($role === 7) {
+                // Engineer → get creator’s local_authority_id
+                $creatorId = intval($userData['created_by']);
+                if ($creatorId > 0) {
+                    $getCreatorAuthority = $conn->prepare("
+                        SELECT local_authority_id 
+                        FROM local_authorities_users 
+                        WHERE user_id = ? AND is_active = 1 
+                        LIMIT 1
+                    ");
+                    $getCreatorAuthority->bind_param("i", $creatorId);
+                    $getCreatorAuthority->execute();
+                    $creatorAuthResult = $getCreatorAuthority->get_result();
+                    if ($creatorAuthResult->num_rows > 0) {
+                        $creatorAuthRow = $creatorAuthResult->fetch_assoc();
+                        $localAuthorityId = $creatorAuthRow['local_authority_id'];
+                    }
+                    $getCreatorAuthority->close();
+                }
+            }
         }
+
+        // Final check — prevent inserting 0 if nothing found
+        if (!$localAuthorityId) {
+            $_SESSION['error'] = "Unable to determine local authority for this user.";
+            header("Location: bulk-projects-invoice-cess-upload-form.php");
+            exit();
+        }
+
 
         // Loop through each row of the worksheet, starting from the second row (skipping the header)
         for ($row = 2; $row <= $highestRow; ++$row) {
