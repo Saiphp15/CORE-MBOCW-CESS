@@ -13,16 +13,30 @@ if (!isset($_GET['id']) || empty($_GET['id'])) {
     exit;
 }
 $project_id = intval($_GET['id']);
+$loggedInUserId = intval($_SESSION['user_id']);
 
 // Fetch project data
-$stmt = $conn->prepare("
-SELECT p.*, lau.local_authority_id 
+$sql = "SELECT p.*, lau.local_authority_id 
 FROM projects p
 LEFT JOIN local_authorities_users lau ON p.local_authority_id = lau.local_authority_id
-WHERE lau.user_id =? AND lau.is_active = 1 AND p.id = ? 
-");
-$loggedInUserId = intval($_SESSION['user_id']);
+WHERE lau.user_id =? AND lau.is_active = 1 AND p.id = ? ";
+$stmt = $conn->prepare($sql);
 $stmt->bind_param("ii", $loggedInUserId, $project_id);
+if($_SESSION['user_role'] == 1 ) {
+    $sql = "SELECT p.*, lau.local_authority_id 
+        FROM projects p
+        LEFT JOIN local_authorities_users lau ON p.local_authority_id = lau.local_authority_id
+        WHERE lau.is_active = 1 AND p.id = ? ";
+        $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $project_id);
+}
+// $stmt = $conn->prepare("
+// SELECT p.*, lau.local_authority_id 
+// FROM projects p
+// LEFT JOIN local_authorities_users lau ON p.local_authority_id = lau.local_authority_id
+// WHERE lau.user_id =? AND lau.is_active = 1 AND p.id = ? 
+// ");
+
 $stmt->execute();
 $project = $stmt->get_result()->fetch_assoc();
 
